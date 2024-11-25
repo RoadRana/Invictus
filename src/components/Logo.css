@@ -1,0 +1,69 @@
+/* src/components/Logo.css */
+.logo-container {
+    text-align: left;
+    margin-right: 20rem;
+    display: inline-block;
+    transition: transform 0.3s ease-in-out;
+    background-color: #7BD5F5;
+    /* Add a dark background color */
+    padding: 10px;
+    /* Add padding to give some space around the logo */
+    border-radius: 8px;
+    /* Optionally, round the corners */
+}
+
+.logo-container:hover {
+    transform: scale(1.05);
+}
+
+#rovLogo {
+    width: 150px;
+    height: 150px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.logo-container:hover #rovLogo {
+    transform: rotate(-5deg) scale(1.1);
+}
+
+.logo-text {
+    font-family: Arial, sans-serif;
+    font-size: 24px;
+    color: #ffffff;
+    /* Change text color to white */
+    margin-top: 0.5rem;
+    transition: color 0.3s ease-in-out;
+}
+
+.logo-container:hover .logo-text {
+    color: #007BFF;
+}
+
+.tagline {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #ffffff;
+    /* Change text color to white */
+    transition: color 0.3s ease-in-out;
+}
+
+.logo-container:hover .tagline {
+    color: #00BFFF;
+}
+
+/* Animation for the robotic arm */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0);
+    }
+
+    50% {
+        transform: translateY(-5px) translateX(5px);
+    }
+}
+
+#rovLogo line {
+    animation: float 2s ease-in-out infinite;
+}
