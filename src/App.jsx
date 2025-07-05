@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'; // Import Routes and Route
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Import Routes and Route
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import About from './components/About';
@@ -28,6 +28,7 @@ function App() {
 
         <div className="content-container">
           <Routes>
+            <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path='/services' element={<Services />} />
