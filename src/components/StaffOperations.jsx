@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
 const StaffOperations = () => {
     const [role, setRole] = useState('');
@@ -7,7 +7,7 @@ const StaffOperations = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        // Add your logic for submitting the selected data
+        // logic for submitting the selected data
         console.log('Selected Role:', role);
         console.log('Selected Account Role:', accountRole);
         console.log('Selected View User:', viewUser);

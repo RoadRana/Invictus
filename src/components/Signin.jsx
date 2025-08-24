@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Signin.css';
-import Banner from '../shared/Banner'; // Correct path to Banner
-import banner from '../assets/banner photo1.png'; // Ensure the image path is correct
-import Logo from './Logo'; // Import the Logo component
+import Banner from '../shared/Banner'; 
+import banner from '../assets/banner photo1.png'; 
+import Logo from './Logo'; 
 
 const SignIn = () => {
     const heading = "Create your account";
@@ -15,10 +15,9 @@ const SignIn = () => {
 
     const handleSignIn = (e) => {
         e.preventDefault();
-        // Placeholder for sign-in logic
         localStorage.setItem('authenticated', true);
-        localStorage.setItem('username', username); // Save username to localStorage
-        localStorage.setItem('email', 'user@example.com'); // Save email to localStorage
+        localStorage.setItem('username', username); 
+        localStorage.setItem('email', 'user@example.com'); 
         navigate('/profile');
     };
 

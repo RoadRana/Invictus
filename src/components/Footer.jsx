@@ -1,9 +1,14 @@
+
+import {Link} from "react-router-dom";
+
+
+
 const Footer = () => {
     return (
         <div>
             <footer
-                className="rounded-x1 rounded-br-lg md:p-9 px-4 py-9"
-                style={{ background: 'linear-gradient(90deg, #7BD5F5 0%, #787FF6 100%)' }}
+                className="rounded-x1 rounded-br-lg md:p-9 px-4 py-9 mt-3"
+                style={{ background: 'linear-gradient(90deg, #7BD5F5 0%, #007F73 100%)' }}
             >                <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
                         <h3 className="text-xl font-bold mb-4 leading-snug text-white opacity-90">
@@ -13,9 +18,9 @@ const Footer = () => {
                     <div>
                         <h4 className="text-lg font-semibold mb-4 text-white opacity-90">Our Company</h4>
                         <ul>
-                            <li><a href="#aboutus" className="hover:underline text-white opacity-80">About Us</a></li>
-                            <li><a href="#services" className="hover:underline text-white opacity-80">Services</a></li>
-                            <li><a href="#products" className="hover:underline text-white opacity-80">Products</a></li>
+                            <li><Link to="/about" className="hover:underline text-white opacity-80">About Us</Link></li>
+                            <li><Link to="/services" className="hover:underline text-white opacity-80">Services</Link></li>
+                            <li><Link to="/products" className="hover:underline text-white opacity-80">Products</Link></li>
                         </ul>
                     </div>
                     <div>

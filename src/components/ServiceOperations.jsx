@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
 const ServiceOperations = () => {
     const [service, setService] = useState('');
@@ -8,7 +8,6 @@ const ServiceOperations = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        // Add your logic for submitting the selected data
         console.log('Selected Service:', service);
         console.log('Service Name:', serviceName);
         console.log('Service Description:', serviceDescription);

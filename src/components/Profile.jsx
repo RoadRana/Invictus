@@ -1,5 +1,3 @@
-// src/components/Profile.js
-import React from 'react';
 import './Profile.css';
 import Banner from '../shared/Banner';
 import banner from '../assets/banner photo1.png';

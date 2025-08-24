@@ -1,7 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom'; // Import Routes and Route instead of Switch
 import './Community.css';
-import Profile from './Profile';
 
 const Community = () => {
     const [comments, setComments] = React.useState([

@@ -1,10 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import  {  useState } from 'react';
 import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from "react-icons/fa";
+import {FaLinkedinIn} from "/Users/rana.adel@dragons-group.com/Downloads/personal/INVICTUS/Invictus/node_modules/react-icons/fa/index";
 import { Link } from 'react-router-dom';
-import * as THREE from 'three';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import StaffLogin from './Stafflogin'; // Import StaffLogin component
+import logo from '../assets/logo.jpeg';
 
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,47 +15,28 @@ const Navbar = () => {
         { link: 'About', path: 'about' },
         { link: 'Services', path: 'services' },
         { link: 'Products', path: 'products' },
-        { link: 'Community', path: 'community' },
+        // { link: 'Community', path: 'community' },
         { link: 'Contact', path: 'contact' },
     ];
 
-    const logoRef = useRef(null);
 
-    useEffect(() => {
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, 100 / 100, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(100, 100);
-        logoRef.current.appendChild(renderer.domElement);
 
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(5, 5, 5);
-        scene.add(light);
-
-        camera.position.z = 3;
-
-        return () => {
-            if (logoRef.current) {
-                logoRef.current.removeChild(renderer.domElement);
-            }
-        };
-    }, []);
 
     return (
         <>
-            {/* Fixed Navbar */}
             <nav
-                className='bg-white md:px-14 p-4 max-w-screen-2xl border-b mx-auto text-primary fixed top-0 right-0 left-0 z-50 shadow-md'
+                className='bg-white md:px-14 p-4 max-w border-b mx-auto text-primary fixed top-0 right-0 left-0 z-50 '
             >
                 <div className='container mx-auto flex justify-between items-center font-medium'>
                     <div className='flex space-x-14 items-center'>
                         {/* Logo */}
-                        <Link to="/home" className='text-2xl font-semibold flex items-center space-x-3 text-primary'>
-                            <div ref={logoRef} className='w-16 h-16 inline-block'></div>
-                            <span>Invictus</span>
+                        <Link to="/home">
+                            <div className="h-14 w-auto">
+                                <img src={logo} alt="Invictus Logo" className='h-full w-auto object-contain' />
+                            </div>
                         </Link>
                         {/* Desktop Navigation */}
-                        <ul className='md:flex space-x-12 hidden'>
+                        <ul className='md:flex space-x-12 hidden text-primary'>
                             {navItems.map(({ link, path }) => (
                                 <Link key={link} to={path} className='block hover:text-secondary'>
                                     {link}
@@ -76,14 +55,18 @@ const Navbar = () => {
                         <a href="/" className='hidden lg:flex items-center hover:text-secondary'>
                             <FaInstagram />
                         </a>
-                        {/* Staff Login */}
-                        <StaffLogin />
+                        <a href="https://www.linkedin.com/company/invictusumvs/" className='hidden lg:flex items-center hover:text-secondary' target='_blank' rel='noopener noreferrer'>
+                            <FaLinkedinIn />
+                        </a>
+
+
                         {/* Sign Up Button */}
-                        <Link to="/signup">
-                            <button className='bg-primary py-2 px-4 transition-all duration-300 text-white rounded hover:text-white hover:bg-indigo-600'>
-                                Sign Up
-                            </button>
-                        </Link>
+                        <Link
+    to="/signup"
+    className=" text-primary  hover:text-secondary"
+>
+    Sign Up
+</Link>
                     </div>
                     {/* Mobile Menu Toggle */}
                     <div className='md:hidden'>

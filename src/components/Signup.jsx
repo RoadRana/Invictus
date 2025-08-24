@@ -1,17 +1,15 @@
-// src/components/SignUp.js
-import React, { useState, useEffect } from 'react';
+import  { useState} from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Signup.css'; // Ensure this file exists with the styles defined below
+import './Signup.css'; 
 import Banner from '../shared/Banner';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShip, faCamera, faWater, faTv } from '@fortawesome/free-solid-svg-icons'; // Import submarine icon
-import Logo from './Logo'; // Import the Logo component
+import Logo from './Logo'; 
 import { Link } from 'react-router-dom';
-import banner from '../assets/banner photo1.png'; // Ensure the image path is correct
+import banner from '../assets/banner photo1.png';
+import StaffLogin from "./Stafflogin.jsx"; 
 
 
 const SignUp = () => {
-    const bannerImage = "../assets/banner photo1.png"; // Replace with the actual path to your image
+    const bannerImage = "../assets/banner photo1.png"; 
     const heading = "Create your account";
     const subheading = "We are dedicated to revolutionizing the maritime industry with our eco-friendly, intelligent unmanned marine vehicles. Our mission is to innovate and lead the way in marine technology, ensuring a sustainable and efficient future for the industry.";
 
@@ -22,8 +20,7 @@ const SignUp = () => {
 
     const handleSignUp = (e) => {
         e.preventDefault();
-        // Placeholder for sign-up logic
-        // For now, just navigate to home page after sign-up
+        // Placeholder for sign-up logic for now only navigate for homepage
         localStorage.setItem('authenticated', true);
         navigate('/home');
     };
@@ -65,8 +62,11 @@ const SignUp = () => {
                         </div>
                         <button type="submit" className="signup-button">Sign Up</button>
                     </form>
-                    <div className="signin-link">
+                    <div className="signin-link mb-4">
                         Already have an account?   <Link to="/signin">Sign In</Link>
+                    </div>
+                    <div className={ "staff-login"}>
+                        <StaffLogin />
                     </div>
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
 const RobotOperations = () => {
     const [robotType, setRobotType] = useState('');
@@ -9,7 +9,6 @@ const RobotOperations = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        // Add your logic for submitting the selected data
         console.log('Selected Robot Type:', robotType);
         console.log('Selected Robot Model:', robotModel);
         console.log('Selected Component Type:', componentType);
