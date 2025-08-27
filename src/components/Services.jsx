@@ -6,6 +6,7 @@ import infraImage from "../assets/services2_05.png";
 import oceanImage from "../assets/services2_09.png";
 import environmentalImage from "../assets/services2_14.png";
 import maritimeImage from "../assets/services2_19.png";
+import apiConfig from "../config/api";
 
 const Services = () => {
   const [servicesData, setServicesData] = useState(null);
@@ -20,10 +21,10 @@ const Services = () => {
     // Fetch data from API
     const fetchData = async () => {
       try {
-       
-        const token =""
+          const baseUrl = apiConfig.baseURL;
+          const token = apiConfig.token;
         const response = await fetch(
-          "",
+          `${baseUrl}/services/api/services_categories_list/`,
           {
             method: "GET",
             headers: {

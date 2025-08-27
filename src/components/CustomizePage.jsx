@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import IN100 from "../assets/IN100ROV.jpeg";
-import MaatSeer from "../assets/services2_09.png";
-import IN300 from "../assets/services2_14.png";
+import apiConfig from "../config/api";
 
 const CustomizePage = () => {
   const [robotData, setRobotData] = useState([]);
@@ -20,11 +18,11 @@ const CustomizePage = () => {
 
   // Helper function to fetch robot data
   const fetchRobotData = async () => {
-    try {
-       const token =
-         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4NjI1ODI5LCJpYXQiOjE3NTYwMzM4MjksImp0aSI6ImNmZmVhZjM0MWM2NDRkOWRiMmM1ZDYzZTFlYzYyMzMxIiwidXNlcl9pZCI6NH0.GiD7tuwgWA1gp-A_-ecWerxhSpiMpih1Y5eDymKb354";
+      try {
+        const baseUrl = apiConfig.baseURL;
+       const token = apiConfig.token;
        const response = await fetch(
-         "https://3b980835104d.ngrok-free.app/products/api/robot_list/",
+         `${baseUrl}/products/api/robot_list/`,
          {
            method: "GET",
            headers: {
@@ -77,24 +75,21 @@ const CustomizePage = () => {
 
     const sendOrderData = async () => {
       try {
-        const token = "";
+        const token = apiConfig.token;
 
-  
-    
-        const response = await fetch(
-          "",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              robot_model: selectedRobot.id,
-              components: formData.components,
-            }),
-          }
-        );
+
+
+        const response = await fetch(`${apiConfig.baseURL}/products/api/client_customize_robot/`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            robot_model: selectedRobot.id,
+            components: formData.components,
+          }),
+        });
         if (!response.ok) {
           throw new Error("Failed to send order data");
         }

@@ -12,7 +12,7 @@ import {
   FaMinus,
 } from "react-icons/fa";
 import banner from "../assets/banner photo.png";
-
+import apiConfig from "../config/api";
 const Contact = () => {
   const [services, setServices] = useState([]);
   const [products, setProducts] = useState([]);
@@ -29,9 +29,8 @@ const Contact = () => {
   });
   const [quantities, setQuantities] = useState({});
 
-  const baseUrl = "";
-  const token = "";
-
+  const baseUrl = apiConfig.baseURL;
+  const token = apiConfig.token;
   useEffect(() => {
     // Fetch services from API
     const fetchServices = async () => {
@@ -40,7 +39,7 @@ const Contact = () => {
         setErrors((prev) => ({ ...prev, services: null }));
 
         const response = await fetch(
-          `${baseUrl}/services/api/services_categories_list/`,
+          `${baseUrl}/services/api/services_list/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -68,7 +67,7 @@ const Contact = () => {
         setErrors((prev) => ({ ...prev, products: null }));
 
         const response = await fetch(
-          `${baseUrl}/products/api/component_model_list/`,
+          `${baseUrl}/products/api/component_model_list`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -124,10 +123,10 @@ const Contact = () => {
   const selectProduct = (product) => {
     setSelectedProduct(product);
     // Initialize quantity to 1 if not already set
-    if (!quantities[`product-${product.serial}`]) {
+    if (!quantities[`product-${product.id}`]) {
       setQuantities((prev) => ({
         ...prev,
-        [`product-${product.serial}`]: 1,
+        [`product-${product.id}`]: 1,
       }));
     }
     setIsProductDropdownOpen(false);
@@ -187,9 +186,9 @@ const Contact = () => {
     // Add product if selected
     if (selectedProduct) {
       items.push({
-        product: selectedProduct.serial.replace(/^0+/, ""),
+        product: selectedProduct.id,
         service: null,
-        quantity: quantities[`product-${selectedProduct.serial}`] || 1,
+        quantity: quantities[`product-${selectedProduct.id}`] || 1,
       });
     }
 
@@ -473,7 +472,7 @@ const Contact = () => {
                       {products.length > 0 ? (
                         products.map((product) => (
                           <li
-                            key={product.serial}
+                            key={product.id}
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                           >
                             <div
@@ -481,7 +480,7 @@ const Contact = () => {
                               onClick={() => selectProduct(product)}
                             >
                               <span>{product.model_name}</span>
-                              {selectedProduct?.serial === product.serial && (
+                              {selectedProduct?.id === product.id && (
                                 <div
                                   className="flex items-center space-x-2 ml-4"
                                   onClick={(e) => e.stopPropagation()}
@@ -492,7 +491,7 @@ const Contact = () => {
                                     onClick={() =>
                                       updateQuantity(
                                         "product",
-                                        product.serial,
+                                        product.id,
                                         -1
                                       )
                                     }
@@ -500,8 +499,7 @@ const Contact = () => {
                                     <FaMinus size={12} />
                                   </button>
                                   <span className="w-8 text-center">
-                                    {quantities[`product-${product.serial}`] ||
-                                      1}
+                                    {quantities[`product-${product.id}`] || 1}
                                   </span>
                                   <button
                                     type="button"
@@ -509,7 +507,7 @@ const Contact = () => {
                                     onClick={() =>
                                       updateQuantity(
                                         "product",
-                                        product.serial,
+                                        product.id,
                                         1
                                       )
                                     }
@@ -537,19 +535,19 @@ const Contact = () => {
                         type="button"
                         className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
                         onClick={() =>
-                          updateQuantity("product", selectedProduct.serial, -1)
+                          updateQuantity("product", selectedProduct.id, -1)
                         }
                       >
                         <FaMinus size={12} />
                       </button>
                       <span className="w-8 text-center">
-                        {quantities[`product-${selectedProduct.serial}`] || 1}
+                        {quantities[`product-${selectedProduct.id}`] || 1}
                       </span>
                       <button
                         type="button"
                         className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
                         onClick={() =>
-                          updateQuantity("product", selectedProduct.serial, 1)
+                          updateQuantity("product", selectedProduct.id, 1)
                         }
                       >
                         <FaPlus size={12} />

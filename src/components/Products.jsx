@@ -6,6 +6,7 @@ import IN100 from "../assets/IN100ROV.jpeg";
 import MaatSeer from "../assets/services2_09.png";
 import IN300 from "../assets/services2_14.png";
 import infra from "../assets/infra.jpg";
+import apiConfig from "../config/api";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -24,10 +25,11 @@ const Products = () => {
 
   useEffect(() => {
     const fetchComponentsData = async () => {
-      try {
-        const token = ""
+        try {
+          const baseUrl = apiConfig.baseURL;
+        const token = apiConfig.token;
         const response = await fetch(
-          "",
+          `${baseUrl}/products/api/component_model_list`,
           {
             method: "GET",
             headers: {
@@ -89,16 +91,17 @@ const Products = () => {
     const handlePurchase = () => {
       const sendOrderData = async () => {
           try {
-            const token = ""
-        
-          // Prepare cart as an array of objects with only serial and quantity
+           
+ const baseUrl = apiConfig.baseURL;
+ const token = apiConfig.token;
+          // Prepare cart as an array of objects with only id and quantity
           const cart = orders.map(order => ({
-            product_id: order.serial.replace(0, ""),
+            product_id: order.id,
             quantity: order.quantity,
           }));
 
           const response = await fetch(
-            "",
+            `${baseUrl}/orders/api/submit_product_cart/`,
             {
               method: "POST",
               headers: {

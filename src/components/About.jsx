@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Banner from "../shared/Banner";
 import { FaLinkedin } from "react-icons/fa";
 import banner from "../assets/banner photo.png";
+import apiConfig from "../config/api";
 
 const About = () => {
   const [teamMembers, setTeamMembers] = useState([]);
@@ -13,9 +14,8 @@ const About = () => {
     "We are dedicated to revolutionizing the maritime industry with our eco-friendly, intelligent unmanned marine vehicles. Our mission is to innovate and lead the way in marine technology, ensuring a sustainable and efficient future for the industry.";
 
   // API configuration
-  const baseUrl = "";
-  const token =
-    "";
+  const baseUrl = apiConfig.baseURL;
+  const token = apiConfig.token;
   useEffect(() => {
     const fetchTeamMembers = async () => {
       try {
