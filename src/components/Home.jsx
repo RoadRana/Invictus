@@ -28,6 +28,24 @@ const Home = () => {
             </button>
           </div>
         </Banner>
+      <div className="mt-20 ">
+        <Banner banner={banner} heading={heading} subsheading={subheading}>
+          <div className=" flex justify-right gap-8 mt-12 ">
+            <button
+              className="py-2 px-4 rounded shadow-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white font-semibold hover:from-teal-400 hover:to-blue-500 hover:text-white transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              aria-label="Learn More Now"
+            >
+              Learn More Now!
+            </button>
+
+            <button
+              className="py-2 px-4 rounded shadow-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white font-semibold hover:from-teal-400 hover:to-blue-500 hover:text-white transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              aria-label="Get A Free Quote"
+            >
+              Get A Free Quote
+            </button>
+          </div>
+        </Banner>
 
         <div className="container mx-auto py-12 px-4 md:px-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
@@ -171,5 +189,7 @@ const Home = () => {
       </div>
     );
             }
+            }
 
+            export default Home;
             export default Home;

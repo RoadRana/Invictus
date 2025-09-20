@@ -40,11 +40,15 @@ function App() {
             <Route path="/signup" element={<SignUp />} />
                       <Route path="/signin" element={<SignIn />} />
           </Routes>
+
         </div>
         <Footer />
       </div>
+
     </Router>
+
   );
+
 }
 
 export default App;

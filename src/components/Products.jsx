@@ -21,12 +21,11 @@ const Products = () => {
   const [componentsData, setComponentsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-    
 
   useEffect(() => {
     const fetchComponentsData = async () => {
-        try {
-          const baseUrl = apiConfig.baseURL;
+      try {
+        const baseUrl = apiConfig.baseURL;
         const token = apiConfig.token;
         const response = await fetch(
           `${baseUrl}/products/api/component_model_list`,
@@ -39,10 +38,10 @@ const Products = () => {
         );
         console.log("response", response);
         if (!response.ok) {
-            throw new Error("Failed to fetch data");
+          throw new Error("Failed to fetch data");
         }
-          const data = await response.json();
-      
+        const data = await response.json();
+
         setComponentsData(data);
       } catch (err) {
         console.error("API fetch failed:", err);
@@ -58,8 +57,6 @@ const Products = () => {
   const handleContactClick = () => {
     navigate("/contact");
   };
-    
-   
 
   const toggleSection = (section) => {
     setVisibleSection(visibleSection === section ? null : section);
@@ -79,58 +76,52 @@ const Products = () => {
       } else {
         return [...prevOrders, { ...item, quantity }];
       }
-        
     });
   };
-    
 
   const handleCheckOems = () => {
     setShowSummary(true);
   };
-    
-    const handlePurchase = () => {
-      const sendOrderData = async () => {
-          try {
-           
- const baseUrl = apiConfig.baseURL;
- const token = apiConfig.token;
-          // Prepare cart as an array of objects with only id and quantity
-          const cart = orders.map(order => ({
-            product_id: order.id,
-            quantity: order.quantity,
-          }));
 
-          const response = await fetch(
-            `${baseUrl}/orders/api/submit_product_cart/`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ cart }),
-            }
-          );
-          if (!response.ok) {
-            throw new Error("Failed to send order data");
+  const handlePurchase = () => {
+    const sendOrderData = async () => {
+      try {
+        const baseUrl = apiConfig.baseURL;
+        const token = apiConfig.token;
+        // Prepare cart as an array of objects with only id and quantity
+        const cart = orders.map((order) => ({
+          product_id: order.id,
+          quantity: order.quantity,
+        }));
+
+        const response = await fetch(
+          `${baseUrl}/orders/api/submit_product_cart/`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ cart }),
           }
-              const data = await response.json();
-
-              console.log("Order data sent successfully:", data);
-              alert("Order submitted successfully!");
-              
-
-        } catch (error) {
-              console.error("Error sending order data:", error);
-              alert("Failed to submit order. Please try again.");
-
+        );
+        if (!response.ok) {
+          throw new Error("Failed to send order data");
         }
-      };
-      sendOrderData();
+        const data = await response.json();
 
-      setOrders([]); // Clear the cart after purchase
-      setShowSummary(false); // Close the summary modal
+        console.log("Order data sent successfully:", data);
+        alert("Order submitted successfully!");
+      } catch (error) {
+        console.error("Error sending order data:", error);
+        alert("Failed to submit order. Please try again.");
+      }
     };
+    sendOrderData();
+
+    setOrders([]); // Clear the cart after purchase
+    setShowSummary(false); // Close the summary modal
+  };
 
   // Classify components by type and get unique model names for each type
   const classifiedComponents = componentsData
@@ -139,7 +130,7 @@ const Products = () => {
         if (!acc[type]) {
           acc[type] = {
             components: [],
-            modelNames: new Set(), 
+            modelNames: new Set(),
           };
         }
         acc[type].components.push(component);
@@ -171,9 +162,7 @@ const Products = () => {
       description:
         "Dive up to 100m with our IN100 ROV. Simple yet advanced, it's tailor-made for inspections. Its modular design effortlessly integrates with today's ROV sensors, ensuring adaptability for diverse operations. Dive in, explore with precision.",
       imgSrc: IN100,
-      tabs: [
-     
-      ],
+      tabs: [],
     },
     {
       id: 2,
@@ -182,9 +171,7 @@ const Products = () => {
       description:
         "Navigate waters with the MaatSeer ASV. Crafted for seamless surface operations, its intuitive design easily accommodates modern sensors. Whether it's research or reconnaissance, MaatSeer stands ready. Sail smoothly, observe confidently.",
       imgSrc: MaatSeer,
-      tabs: [
-       
-      ],
+      tabs: [],
     },
     {
       id: 3,
@@ -193,9 +180,7 @@ const Products = () => {
       description:
         "Descend to 300m with our IN300 ROV. Beyond depth, it promises unmatched versatility.Crafted for comprehensive inspections, its modular framework seamlessly pairs with contemporary ROV sensors. Dive deeper, achieve with clarity.",
       imgSrc: IN300,
-      tabs: [
-       
-      ],
+      tabs: [],
     },
   ];
 
@@ -248,7 +233,6 @@ const Products = () => {
                 {product.subtitle}
               </h4>
               <p className="text-gray-600 mb-4">{product.description}</p>
-             
             </div>
           ))}
         </div>
@@ -399,7 +383,8 @@ const Products = () => {
               >
                 Close
               </button>
-              <button onClick={handlePurchase}
+              <button
+                onClick={handlePurchase}
                 className="mt-6 px-6 py-3 text-xl bg-gradient-to-r from-blue-500
                 to-teal-400 bg-clip-text text-transparent hover:text-gray-200
                 transition duration-300"
@@ -445,44 +430,43 @@ const ComponentsSection = ({ title, items, onAddToCart }) => {
     }));
   };
 
-return (
+  return (
     <div className="bg-gray-100 p-6 mt-8 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
-        <div className="space-y-6">
-            {items.map((item, index) => (
-                <div
-                    key={index}
-                    className="p-4 bg-white rounded-lg shadow-md flex flex-col md:flex-row md:justify-between md:items-center hover:shadow-lg transition-shadow duration-300"
-                >
-                    <div>
-                        <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                            {item.model_name}
-                        </h3>
-                        
-                    </div>
-                    <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                        <input
-                            type="number"
-                            min="1"
-                            value={quantities[index] || 1}
-                            onChange={(e) =>
-                                handleQuantityChange(index, parseInt(e.target.value) || 1)
-                            }
-                            placeholder="Qty"
-                            className="w-20 p-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        />
-                        <button
-                            onClick={() => onAddToCart(item, quantities[index] || 1)}
-                            className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
-                        >
-                            Add to Cart
-                        </button>
-                    </div>
-                </div>
-            ))}
-        </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
+      <div className="space-y-6">
+        {items.map((item, index) => (
+          <div
+            key={index}
+            className="p-4 bg-white rounded-lg shadow-md flex flex-col md:flex-row md:justify-between md:items-center hover:shadow-lg transition-shadow duration-300"
+          >
+            <div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                {item.model_name}
+              </h3>
+            </div>
+            <div className="flex items-center space-x-4 mt-4 md:mt-0">
+              <input
+                type="number"
+                min="1"
+                value={quantities[index] || 1}
+                onChange={(e) =>
+                  handleQuantityChange(index, parseInt(e.target.value) || 1)
+                }
+                placeholder="Qty"
+                className="w-20 p-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+              <button
+                onClick={() => onAddToCart(item, quantities[index] || 1)}
+                className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
+              >
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
-);
+  );
 };
 
 export default Products;

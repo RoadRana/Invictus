@@ -61,10 +61,14 @@ const Services = () => {
     };
 
     window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll);
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLinkClick = (section) => {
+    setVisibleSection(visibleSection === section ? null : section);
+  };
   const handleLinkClick = (section) => {
     setVisibleSection(visibleSection === section ? null : section);
   };
