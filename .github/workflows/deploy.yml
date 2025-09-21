@@ -17,6 +17,11 @@ on:
         - staging
         - production
 
+permissions:
+  contents: write
+  actions: read
+  id-token: write
+
 env:
   NODE_VERSION: '18'
   AWS_REGION: 'us-east-1'
