@@ -1,0 +1,218 @@
+# .github/CODEOWNERS
+# 
+# This file defines who is responsible for code in this repository.
+# GitHub will automatically request reviews from these users/teams when
+# files they "own" are modified in a pull request.
+#
+# Documentation: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# Syntax:
+# pattern email|@username|@org/team-name
+#
+# Order matters! Later matches take precedence over earlier ones.
+
+# =============================================================================
+# DEFAULT OWNERS
+# =============================================================================
+# These owners will be the default owners for everything in the repo.
+# Unless a later match takes precedence, they will be requested for review.
+
+# * @yourusername
+
+# =============================================================================
+# EXAMPLE: SOLO DEVELOPER (Your Current Setup)
+# =============================================================================
+# For a solo developer, keep it simple:
+
+# * @yourusername
+# /.github/ @yourusername
+# /deployment/ @yourusername
+
+# =============================================================================
+# EXAMPLE: SMALL TEAM (2-5 people)
+# =============================================================================
+
+# # Default owners for all files
+# * @lead-dev @tech-lead
+# 
+# # Frontend code
+# /src/components/ @frontend-dev @lead-dev
+# /src/pages/ @frontend-dev
+# /src/styles/ @frontend-dev @designer
+# 
+# # Backend/API integration
+# /src/api/ @backend-dev @lead-dev
+# /src/services/ @backend-dev
+# 
+# # Infrastructure and deployment
+# /.github/ @devops-engineer @lead-dev
+# /deployment/ @devops-engineer
+# /.ebextensions/ @devops-engineer
+# /Dockerfile @devops-engineer
+# 
+# # Documentation
+# /docs/ @lead-dev @tech-writer
+# *.md @lead-dev
+# 
+# # Configuration files
+# package.json @lead-dev @frontend-dev
+# tsconfig.json @lead-dev @frontend-dev
+# vite.config.ts @lead-dev @frontend-dev
+
+# =============================================================================
+# EXAMPLE: LARGER TEAM (World-Class Company Style)
+# Based on how companies like GitHub, Stripe, and Vercel structure theirs
+# =============================================================================
+
+# # ==================================================
+# # Global Owners (Fallback)
+# # ==================================================
+# * @org/engineering-leads
+# 
+# # ==================================================
+# # Frontend
+# # ==================================================
+# /src/ @org/frontend-team
+# /src/components/ @org/frontend-team @org/design-system-team
+# /src/pages/ @org/frontend-team
+# /public/ @org/frontend-team
+# 
+# # ==================================================
+# # Specific Feature Areas
+# # ==================================================
+# # Authentication & Security
+# /src/auth/ @org/security-team @org/backend-team
+# /src/components/Login/ @org/security-team @org/frontend-team
+# 
+# # Payment Integration
+# /src/payment/ @org/payments-team @payment-lead
+# /src/components/Checkout/ @org/payments-team @org/frontend-team
+# 
+# # Admin Dashboard
+# /src/admin/ @org/admin-team @admin-lead
+# 
+# # ==================================================
+# # Infrastructure & DevOps
+# # ==================================================
+# /.github/ @org/devops-team @org/security-team
+# /.github/workflows/ @org/devops-team
+# /deployment/ @org/devops-team
+# /docker/ @org/devops-team
+# *.dockerfile @org/devops-team
+# docker-compose*.yml @org/devops-team
+# 
+# # ==================================================
+# # Configuration Files (Require Multiple Approvals)
+# # ==================================================
+# package.json @org/frontend-leads @org/security-team
+# package-lock.json @org/frontend-leads
+# tsconfig.json @org/frontend-leads
+# vite.config.* @org/frontend-leads @org/devops-team
+# .eslintrc* @org/frontend-leads
+# 
+# # AWS and cloud configuration
+# /.ebextensions/ @org/devops-team @org/cloud-team
+# /terraform/ @org/devops-team @org/cloud-team
+# /cloudformation/ @org/devops-team @org/cloud-team
+# 
+# # ==================================================
+# # Security-Sensitive Files (Strict Review)
+# # ==================================================
+# # These require approval from security team
+# .github/workflows/*.yml @org/devops-team @org/security-team
+# **/auth*.* @org/security-team
+# **/secrets*.* @org/security-team
+# **/*security*.* @org/security-team
+# 
+# # ==================================================
+# # Documentation
+# # ==================================================
+# /docs/ @org/docs-team @org/engineering-leads
+# *.md @org/docs-team
+# README.md @org/engineering-leads
+# CONTRIBUTING.md @org/engineering-leads @org/docs-team
+# 
+# # ==================================================
+# # Database & Schema
+# # ==================================================
+# /migrations/ @org/backend-team @org/dba-team
+# /schema/ @org/backend-team @org/dba-team
+# 
+# # ==================================================
+# # Legal & Compliance
+# # ==================================================
+# LICENSE @org/legal-team @org/engineering-leads
+# /legal/ @org/legal-team
+# PRIVACY.md @org/legal-team
+# 
+# # ==================================================
+# # Build & Dependencies
+# # ==================================================
+# Dockerfile @org/devops-team @org/security-team
+# .dockerignore @org/devops-team
+# .gitignore @org/engineering-leads
+# 
+# # ==================================================
+# # Critical Root Files
+# # ==================================================
+# # These affect the entire project and need thorough review
+# .github/CODEOWNERS @org/engineering-leads @org/devops-team
+
+# =============================================================================
+# ADVANCED PATTERNS
+# =============================================================================
+
+# # Match any file with "test" in its name
+# **/*test* @org/qa-team
+# 
+# # Match all JavaScript/TypeScript files
+# *.js @org/frontend-team
+# *.jsx @org/frontend-team
+# *.ts @org/frontend-team
+# *.tsx @org/frontend-team
+# 
+# # Match all CSS/SCSS files
+# *.css @org/design-team
+# *.scss @org/design-team
+# 
+# # Match all configuration files
+# *.config.* @org/devops-team @org/engineering-leads
+# 
+# # Specific file by name
+# package.json @org/frontend-leads @org/security-team
+# 
+# # Multiple owners (all must approve if "Require review from Code Owners" is enabled)
+# /critical-feature/ @owner1 @owner2 @owner3
+
+# =============================================================================
+# YOUR CURRENT RECOMMENDED CODEOWNERS (Solo Developer)
+# =============================================================================
+# Start simple, expand as your team grows
+
+# Default owners for all files
+# @lead-dev @tech-lead @devops-engineer
+* @Salah1293 @RoadRana @hos-arafat
+
+# Frontend code
+/src/components/ @RoadRana @lead-dev
+/src/pages/ @RoadRana
+/src/styles/ @RoadRana
+
+# Backend/API integration
+/src/api/ @Salah1293 @hos-arafat
+/src/services/ @Salah1293
+
+# Infrastructure and deployment
+/.github/ @hos-arafat
+/deployment/ @hos-arafat
+/.ebextensions/ @hos-arafat
+/Dockerfile @hos-arafat
+
+# Documentation
+# /docs/ @lead-dev @tech-writer
+*.md @hos-arafat
+
+# Configuration files
+package.json @hos-arafat @RoadRana
+tsconfig.json @hos-arafat @RoadRana
+vite.config.ts @hos-arafat @RoadRana
