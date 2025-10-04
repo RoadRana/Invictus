@@ -8,11 +8,12 @@ on:
 permissions:
   contents: read
   pull-requests: write
-  security-events: write  # For security scanning
+  security-events: write
 
 env:
   NODE_VERSION: '20'
-  CI: true
+  # 🎯 TOGGLE: Set to 'false' when team is ready for strict enforcement
+  ONBOARDING_MODE: 'true'
 
 jobs:
   quality-gates:
@@ -22,8 +23,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Full history for better analysis
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -35,73 +34,15 @@ jobs:
         run: npm ci
 
       # ============================================
-      # Requirement 1.2: Linting & Code Quality
+      # 🔴 TIER 1: ALWAYS REQUIRED (Strict)
       # ============================================
       
-      - name: Run linting
-        id: lint
-        run: npm run lint
-        continue-on-error: true  # BLOCKS merging
-
-      - name: Type checking (if using TypeScript)
-        if: hashFiles('tsconfig.json') != ''
-        run: npm run type-check || npx tsc --noEmit
-        continue-on-error: true
-        
-      - name: Check code formatting
-        id: format
-        run: npm run format:check
-        continue-on-error: true
-
-      # ============================================
-      # Requirement 1.3: Security Scans
-      # ============================================
-
-      - name: Run security audit
-        id: security
-        run: npm run ci:security
-
-      - name: Check for dependency vulnerabilities
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-        continue-on-error: true
-
-      - name: Upload security scan results
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      # ============================================
-      # Requirement 1.1: Automated Tests
-      # ============================================
-
-      - name: Run unit tests
-        id: unit-tests
-        run: npm run test:unit || npm test -- --watchAll=false
-        # If we don't have separate unit/integration tests yet,
-        # the || fallback runs the default test command
-
-
-      - name: Run integration tests
-        if: hashFiles('tests/integration/**') != ''
-        run: npm run test:integration || echo "No integration tests configured"
-        continue-on-error: true  # BLOCKS merging if this fails
-
-      # ============================================
-      # Requirement 1.4: Build Application
-      # ============================================
-
       - name: Build application
         id: build
         run: npm run build
         env:
           NODE_ENV: production
+        continue-on-error: false  # ✅ Always strict - broken build = broken app
 
       - name: Verify build output
         run: |
@@ -116,39 +57,93 @@ jobs:
           fi
           
           echo "✅ Build verification passed"
+        continue-on-error: false  # ✅ Always strict
 
       # ============================================
-      # Requirement 1.5: Store Build Artifacts
+      # 🟡 TIER 2: QUALITY CHECKS (Onboarding Mode)
       # ============================================
 
-      - name: Upload build artifacts for review
+      - name: Run linting
+        id: lint
+        run: npm run lint
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+
+      - name: Check code formatting
+        id: format
+        run: npm run format:check
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+
+      - name: Type checking
+        id: type-check
+        if: hashFiles('tsconfig.json') != ''
+        run: npm run type-check || npx tsc --noEmit
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+
+      - name: Run unit tests
+        id: unit-tests
+        run: npm run test:unit
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+
+      - name: Run integration tests
+        id: integration-tests
+        run: npm run test:integration
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+
+      # ============================================
+      # 🟢 TIER 3: SECURITY (Warnings Only)
+      # ============================================
+
+      - name: Run security audit
+        id: security
+        run: npm run ci:security
+        continue-on-error: true  # ⚠️ Always warn-only (some vulnerabilities might be unfixable)
+
+      - name: Security scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true  # ⚠️ Warn-only during initial setup
+
+      - name: Upload security scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+      # ============================================
+      # 📦 ARTIFACTS (Always Store)
+      # ============================================
+
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: pr-build-${{ github.event.pull_request.number }}-${{ github.sha }}
+          name: pr-build-${{ github.event.pull_request.number }}
           path: dist/
           retention-days: 7
           if-no-files-found: error
 
-      - name: Generate artifact preview link
-        id: artifact-info
-        run: |
-          echo "artifact_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
-
       # ============================================
-      # Report Results
+      # 📊 REPORTING (Show What Needs Fixing)
       # ============================================
 
-      - name: Comment on PR
+      - name: Report results with onboarding guidance
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const status = '${{ job.status }}';
+            const onboardingMode = '${{ env.ONBOARDING_MODE }}' === 'true';
             const prNumber = context.payload.pull_request.number;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             
             const lintStatus = '${{ steps.lint.outcome }}';
             const formatStatus = '${{ steps.format.outcome }}';
+            const typeCheckStatus = '${{ steps.type-check.outcome }}';
             const securityStatus = '${{ steps.security.outcome }}';
             const unitTestStatus = '${{ steps.unit-tests.outcome }}';
             const integrationTestStatus = '${{ steps.integration-tests.outcome }}';
@@ -157,51 +152,111 @@ jobs:
             const getEmoji = (status) => {
               if (status === 'success') return '✅';
               if (status === 'failure') return '❌';
+              if (status === 'skipped') return '⏭️';
               return '⚠️';
             };
             
-            const emoji = status === 'success' ? '✅' : '❌';
-            const title = status === 'success' ? 'All quality checks passed!' : 'Quality checks failed';
+            const getStatusText = (status, isOnboarding) => {
+              if (status === 'success') return '✅ Passed';
+              if (status === 'failure') {
+                return isOnboarding ? '⚠️ Failed (not blocking)' : '❌ Failed (blocking)';
+              }
+              if (status === 'skipped') return '⏭️ Skipped';
+              return '⚠️ Unknown';
+            };
             
-            let body = `${emoji} **${title}**
+            let body = '';
             
-            ### CI Pipeline Results
+            if (onboardingMode) {
+              body += `## 🎓 Onboarding Mode Active
             
-            | Check | Status |
-            |-------|--------|
-            | Linting | ${getEmoji(lintStatus)} ${lintStatus} |
-            | Formatting | ${getEmoji(formatStatus)} ${formatStatus} |
-            | Security Audit | ${getEmoji(securityStatus)} ${securityStatus} |
-            | Unit Tests | ${getEmoji(unitTestStatus)} ${unitTestStatus} |
-            | Integration Tests | ${getEmoji(integrationTestStatus)} ${integrationTestStatus} |
-            | Build | ${getEmoji(buildStatus)} ${buildStatus} |
+            This PR is running in **onboarding mode**. Quality checks that fail will **not block merging** so the team can gradually improve code quality.
+            
+            `;
+            }
+            
+            body += `### CI Pipeline Results
+            
+            | Check | Status | Enforcement |
+            |-------|--------|-------------|
+            | Build | ${getEmoji(buildStatus)} ${buildStatus} | 🔴 Always Required |
+            | Linting | ${getEmoji(lintStatus)} ${lintStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Formatting | ${getEmoji(formatStatus)} ${formatStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Type Check | ${getEmoji(typeCheckStatus)} ${typeCheckStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Unit Tests | ${getEmoji(unitTestStatus)} ${unitTestStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Integration Tests | ${getEmoji(integrationTestStatus)} ${integrationTestStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Security Audit | ${getEmoji(securityStatus)} ${securityStatus} | 🟢 Warning Only |
             `;
             
-            if (status === 'success') {
+            // Show what needs attention
+            const issues = [];
+            if (lintStatus === 'failure') issues.push('Linting');
+            if (formatStatus === 'failure') issues.push('Code Formatting');
+            if (typeCheckStatus === 'failure') issues.push('Type Checking');
+            if (unitTestStatus === 'failure') issues.push('Unit Tests');
+            if (integrationTestStatus === 'failure') issues.push('Integration Tests');
+            
+            if (issues.length > 0) {
+              body += `
+            ### 🔧 Items Needing Attention
+            
+            The following checks failed but are not blocking during onboarding:
+            ${issues.map(issue => `- ${issue}`).join('\n')}
+            
+            **Action Items:**
+            `;
+              
+              if (issues.includes('Linting')) {
+                body += `
+            - **Fix linting**: Run \`npm run lint\` locally
+            `;
+              }
+              if (issues.includes('Code Formatting')) {
+                body += `
+            - **Fix formatting**: Run \`npm run format\` locally
+            `;
+              }
+              if (issues.includes('Type Checking')) {
+                body += `
+            - **Fix types**: Review TypeScript errors
+            `;
+              }
+              if (issues.includes('Unit Tests') || issues.includes('Integration Tests')) {
+                body += `
+            - **Fix tests**: Review test failures and update code or tests
+            `;
+              }
+            } else if (onboardingMode && status === 'success') {
+              body += `
+            ### 🎉 Excellent Work!
+            
+            All quality checks passed! This PR is ready for strict enforcement mode.
+            `;
+            }
+            
+            if (buildStatus === 'success') {
               body += `
             ### 📦 Build Artifacts
-            
-            **Built application is ready for review!**
             
             [Download build artifacts →](${runUrl})
             
             **How to test:**
             1. Click the link above
-            2. Scroll to "Artifacts" section
+            2. Scroll to "Artifacts" section  
             3. Download \`pr-build-${prNumber}\`
-            4. Extract and open \`dist/index.html\` in your browser
+            4. Extract and open \`dist/index.html\`
             `;
-            } else {
-              body += `
-            ### 🔧 Action Required
+            }
             
-            Please fix the failing checks before this PR can be merged.
+            if (onboardingMode) {
+              body += `
+            ---
+            
+            💡 **Tip**: Once the team has addressed common issues, disable onboarding mode by changing \`ONBOARDING_MODE: 'false'\` in the workflow file.
             `;
             }
             
             body += `
-            
-            ---
             
             [View full workflow run →](${runUrl})`;
             
@@ -211,21 +266,3 @@ jobs:
               issue_number: prNumber,
               body: body
             });
-
-      # ============================================
-      # Requirement 1.7: Performance Metrics (Bonus)
-      # ============================================
-
-      - name: Analyze bundle size
-        if: success()
-        run: |
-          echo "## Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| File | Size |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
-          
-          find dist -type f -name "*.js" -o -name "*.css" | while read file; do
-            size=$(du -h "$file" | cut -f1)
-            name=$(basename "$file")
-            echo "| $name | $size |" >> $GITHUB_STEP_SUMMARY
-          done
