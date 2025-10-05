@@ -1,0 +1,227 @@
+# Deploys to staging environment when develop branch is updated
+
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [develop]
+    paths-ignore:
+      # Only ignore files that are NEVER part of the build output
+      - ".github/workflows/**"
+      - ".github/ISSUE_TEMPLATE/**"
+      - ".github/PULL_REQUEST_TEMPLATE/**"
+      - "docs/**"
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - "LICENSE"
+      - "*.md"
+      - "*.txt"
+      - "*.yml"
+      - "*.yaml"
+      - "*.toml"
+      - "*.lock"
+      - ".gitignore"
+      - ".gitattributes"
+      - "scripts/**" # Currently not part of build output
+
+  workflow_dispatch: # Allow manual staging deployments
+    inputs:
+      reason:
+        description: "Reason for manual deployment"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.SITE_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_STAGING }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Backup current staging
+        run: |
+          echo "📦 Creating backup of current staging..."
+          aws s3 sync s3://${{ secrets.STAGING_S3_BUCKET }} \
+            s3://${{ secrets.STAGING_S3_BUCKET }}-backup/current/ \
+            --delete || echo "No existing staging to backup"
+
+      - name: Deploy to S3
+        id: deploy
+        run: |
+          echo "🚀 Deploying to staging..."
+
+          # Deploy static assets with long cache (1 year)
+          aws s3 sync ./dist s3://${{ secrets.STAGING_S3_BUCKET }} \
+            --delete \
+            --cache-control "max-age=31536000,immutable" \
+            --exclude "*.html" \
+            --exclude "*.json"
+
+          # Deploy HTML/JSON with no-cache for SPA routing
+          aws s3 sync ./dist s3://${{ secrets.STAGING_S3_BUCKET }} \
+            --cache-control "no-cache,no-store,must-revalidate" \
+            --include "*.html" \
+            --include "*.json"
+
+          echo "deployment-time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - name: Invalidate CloudFront cache
+        id: invalidate
+        run: |
+          echo "🔄 Invalidating CloudFront cache..."
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.STAGING_CLOUDFRONT_ID }} \
+            --paths "/*" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "Invalidation ID: $INVALIDATION_ID"
+
+          # Wait for invalidation to complete
+          aws cloudfront wait invalidation-completed \
+            --distribution-id ${{ secrets.STAGING_CLOUDFRONT_ID }} \
+            --id $INVALIDATION_ID
+
+      - name: Run smoke tests
+        id: smoke-tests
+        run: |
+          echo "🧪 Running smoke tests..."
+          sleep 30  # Allow time for deployment to propagate
+
+          # Test basic availability
+            echo "Testing: ${{ vars.SITE_URL }}/"
+          curl -f --retry 3 --retry-delay 10 ${{ vars.SITE_URL }}/ || exit 1
+
+          # Test SPA routing
+          echo "Testing: ${{ vars.SITE_URL }}/about"
+          curl -f --retry 3 --retry-delay 10 ${{ vars.SITE_URL }}/about || exit 1
+
+          # Test HTTPS redirect
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://staging.invictusumvs.net/)
+          if [ "$HTTP_CODE" != "301" ] && [ "$HTTP_CODE" != "302" ]; then
+            echo "❌ HTTPS redirect failed (got $HTTP_CODE)"
+            exit 1
+          fi
+
+          echo "✅ All smoke tests passed!"
+
+      - name: Store deployment metadata
+        run: |
+          echo "📝 Storing deployment metadata..."
+          echo '{
+            "commit": "${{ github.sha }}",
+            "branch": "develop",
+            "actor": "${{ github.actor }}",
+            "timestamp": "${{ steps.deploy.outputs.deployment-time }}",
+            "workflow_run": "${{ github.run_id }}",
+            "manual_trigger": "${{ github.event_name == 'workflow_dispatch' }}",
+            "manual_reason": "${{ github.event.inputs.reason }}",
+            "tests_passed": true,
+            "ready_for_production": true
+          }' > deployment-info.json
+
+          aws s3 cp deployment-info.json \
+            s3://${{ secrets.STAGING_S3_BUCKET }}-backup/current/deployment-info.json
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "🚨 Deployment failed! Initiating rollback..."
+
+          if aws s3 ls s3://${{ secrets.STAGING_S3_BUCKET }}-backup/current/ > /dev/null 2>&1; then
+            echo "♻️ Restoring from backup..."
+            aws s3 sync \
+              s3://${{ secrets.STAGING_S3_BUCKET }}-backup/current/ \
+              s3://${{ secrets.STAGING_S3_BUCKET }} \
+              --delete --exclude "deployment-info.json"
+            
+            aws cloudfront create-invalidation \
+              --distribution-id ${{ secrets.STAGING_CLOUDFRONT_ID }} \
+              --paths "/*"
+            
+            echo "✅ Rollback completed"
+          else
+            echo "❌ No backup available - manual intervention required"
+          fi
+
+      - name: Tag successful deployment
+        if: success() && github.event_name == 'push'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          TAG_NAME="staging-$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}"
+          git tag -a "$TAG_NAME" -m "Staging deployment: ${{ steps.deploy.outputs.deployment-time }}"
+          git push origin "$TAG_NAME"
+
+      - name: Create deployment summary
+        if: always()
+        run: |
+          echo "## 🚀 Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Staging" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://staging.invictusumvs.net" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Time:** ${{ steps.deploy.outputs.deployment-time }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "**Trigger:** Manual deployment" >> $GITHUB_STEP_SUMMARY
+            echo "**Reason:** ${{ github.event.inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Trigger:** Push to develop branch" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # Uncomment when Slack is configured
+      # - name: Notify team
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}
+      #     channel: '#deployments'
+      #     text: |
+      #       ${{ job.status == 'success' && '✅' || '❌' }} **Staging Deployment ${{ job.status }}**
+      #
+      #       📦 **Build Info:**
+      #       • Commit: ${{ github.sha }}
+      #       • Author: ${{ github.actor }}
+      #       • Time: ${{ steps.deploy.outputs.deployment-time }}
+      #
+      #       🌐 **Test here:** https://staging.invictusumvs.net
+      #
+      #       ${{ job.status == 'success' && '🚀 **Next step:** When ready, merge develop → main for production' || '⚠️ **Action required:** Check logs for details' }}
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

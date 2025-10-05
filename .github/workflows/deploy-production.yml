@@ -1,0 +1,566 @@
+# .github/workflows/deploy-production.yml
+#
+# Production Deployment Workflow
+# Triggers: Automatic when main branch is updated (via merged PR from develop)
+#
+# What this does:
+# 1. Builds fresh from main branch
+# 2. Creates timestamped backup of current production
+# 3. Deploys to S3 production bucket
+# 4. Invalidates CloudFront cache
+# 5. Runs comprehensive health checks
+# 6. Auto-rollback if health checks fail
+# 7. Tags successful releases
+#
+# Manual Actions Available:
+# - Manual deployment (if needed)
+# - Emergency rollback to previous version
+
+name: Deploy to Production
+
+on:
+    # Automatic deployment when main branch is updated
+    push:
+        branches: [main]
+        paths-ignore:
+            # Only ignore files that are NEVER part of the build output
+            - ".github/workflows/**"
+            - ".github/ISSUE_TEMPLATE/**"
+            - ".github/PULL_REQUEST_TEMPLATE/**"
+            - "docs/**"
+            - "README.md"
+            - "CONTRIBUTING.md"
+            - "LICENSE"
+            - "*.md"
+            - "*.txt"
+            - "*.yml"
+            - "*.yaml"
+            - "*.toml"
+            - "*.lock"
+            - ".gitignore"
+            - ".gitattributes"
+            - "scripts/**" # Currently not part of build output
+
+    # Manual deployment and emergency actions
+    workflow_dispatch:
+        inputs:
+            action:
+                description: "Action to perform"
+                required: true
+                type: choice
+                options:
+                    - deploy
+                    - emergency-rollback
+                default: deploy
+
+permissions:
+    contents: write # Needed for git tagging
+    id-token: write # Needed for AWS OIDC authentication
+
+env:
+    NODE_VERSION: "20"
+    AWS_REGION: "us-east-1"
+
+jobs:
+    # ==========================================================================
+    # JOB 1: Deploy to Production
+    # ==========================================================================
+    deploy:
+        name: Deploy to Production
+        runs-on: ubuntu-latest
+
+        # Only run this job when:
+        # - Push event (automatic deployment), OR
+        # - Manual workflow dispatch with "deploy" action
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'deploy')
+
+        # GitHub Environment configuration
+        # This provides the production URL and can require manual approval
+        environment:
+            name: production
+            url: https://invictusumvs.net
+
+        steps:
+            # ----------------------------------------------------------------------
+            # Setup
+            # ----------------------------------------------------------------------
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: "npm"
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Build application
+              run: npm run build
+              env:
+                  NODE_ENV: production
+
+            # ----------------------------------------------------------------------
+            # AWS Authentication
+            # ----------------------------------------------------------------------
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN_PRODUCTION }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            # ----------------------------------------------------------------------
+            # Backup Current Production
+            # ----------------------------------------------------------------------
+            - name: Backup current production
+              run: |
+                  echo "📦 Creating timestamped backup of current production..."
+
+                  # Create unique backup key with timestamp
+                  BACKUP_KEY="production-backup-$(date +%Y%m%d-%H%M%S)"
+                  echo "Backup key: ${BACKUP_KEY}"
+
+                  # Create timestamped backup (keeps history)
+                  aws s3 sync s3://${{ secrets.PRODUCTION_S3_BUCKET }} \
+                    s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/${BACKUP_KEY}/ \
+                    || echo "⚠️ No existing production to backup (first deployment?)"
+
+                  # Update 'current' backup pointer (for easy rollback)
+                  aws s3 sync s3://${{ secrets.PRODUCTION_S3_BUCKET }} \
+                    s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/current/ \
+                    --delete \
+                    || echo "⚠️ No existing production to backup (first deployment?)"
+
+                  echo "✅ Backup completed"
+
+            # ----------------------------------------------------------------------
+            # Deploy to S3
+            # ----------------------------------------------------------------------
+            - name: Deploy to S3
+              id: deploy
+              run: |
+                  echo "🚀 Deploying to production S3 bucket..."
+
+                  # Deploy static assets with long cache (1 year)
+                  # These files have content hashes, so they can be cached forever
+                  echo "Deploying static assets (JS, CSS, images)..."
+                  aws s3 sync ./dist s3://${{ secrets.PRODUCTION_S3_BUCKET }} \
+                    --delete \
+                    --cache-control "max-age=31536000,immutable" \
+                    --exclude "*.html" \
+                    --exclude "*.json"
+
+                  # Deploy HTML/JSON with no-cache
+                  # These files need to be checked every time for SPA routing
+                  echo "Deploying HTML and JSON files..."
+                  aws s3 sync ./dist s3://${{ secrets.PRODUCTION_S3_BUCKET }} \
+                    --cache-control "no-cache,no-store,must-revalidate" \
+                    --include "*.html" \
+                    --include "*.json"
+
+                  # Store deployment timestamp for metadata
+                  DEPLOYMENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+                  echo "deployment-time=${DEPLOYMENT_TIME}" >> $GITHUB_OUTPUT
+                  echo "✅ Deployment to S3 completed at ${DEPLOYMENT_TIME}"
+
+            # ----------------------------------------------------------------------
+            # CloudFront Cache Invalidation
+            # ----------------------------------------------------------------------
+            - name: Invalidate CloudFront cache
+              id: invalidate
+              run: |
+                  echo "🔄 Invalidating CloudFront cache..."
+
+                  # Create invalidation for all paths
+                  INVALIDATION_ID=$(aws cloudfront create-invalidation \
+                    --distribution-id ${{ secrets.PRODUCTION_CLOUDFRONT_ID }} \
+                    --paths "/*" \
+                    --query 'Invalidation.Id' \
+                    --output text)
+
+                  echo "Invalidation ID: ${INVALIDATION_ID}"
+                  echo "invalidation-id=${INVALIDATION_ID}" >> $GITHUB_OUTPUT
+
+                  # Wait for invalidation to complete
+                  echo "⏳ Waiting for CloudFront invalidation to complete..."
+                  aws cloudfront wait invalidation-completed \
+                    --distribution-id ${{ secrets.PRODUCTION_CLOUDFRONT_ID }} \
+                    --id ${INVALIDATION_ID}
+
+                  echo "✅ CloudFront cache invalidation completed"
+
+            # ----------------------------------------------------------------------
+            # Health Checks
+            # ----------------------------------------------------------------------
+            - name: Run comprehensive health checks
+              id: health-checks
+              run: |
+                  echo "🏥 Running comprehensive health checks..."
+                  echo "⏳ Waiting 60 seconds for CloudFront propagation..."
+                  sleep 60
+
+                  # Track all test results
+                  ALL_TESTS_PASSED=true
+
+                  # Test 1: Main domain
+                  echo ""
+                  echo "Test 1: Main domain (https://invictusumvs.net/)"
+                  if curl -f --retry 5 --retry-delay 15 --max-time 30 https://invictusumvs.net/; then
+                    echo "✅ Main domain is accessible"
+                  else
+                    echo "❌ Main domain is NOT accessible"
+                    ALL_TESTS_PASSED=false
+                  fi
+
+                  # Test 2: WWW subdomain
+                  echo ""
+                  echo "Test 2: WWW subdomain (https://www.invictusumvs.net/)"
+                  if curl -f --retry 5 --retry-delay 15 --max-time 30 https://www.invictusumvs.net/; then
+                    echo "✅ WWW subdomain is accessible"
+                  else
+                    echo "❌ WWW subdomain is NOT accessible"
+                    ALL_TESTS_PASSED=false
+                  fi
+
+                  # Test 3: SPA routing (test a key route)
+                  echo ""
+                  echo "Test 3: SPA routing (https://invictusumvs.net/about)"
+                  if curl -f --retry 5 --retry-delay 15 --max-time 30 https://invictusumvs.net/about; then
+                    echo "✅ SPA routing is working"
+                  else
+                    echo "⚠️ SPA routing test failed (may not be critical if /about doesn't exist yet)"
+                    # Don't fail deployment for this - it might be a new site without /about
+                  fi
+
+                  # Test 4: HTTPS redirect
+                  echo ""
+                  echo "Test 4: HTTPS redirect"
+                  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 http://invictusumvs.net/)
+                  if [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ]; then
+                    echo "✅ HTTPS redirect is working (HTTP ${HTTP_CODE})"
+                  else
+                    echo "❌ HTTPS redirect failed (got HTTP ${HTTP_CODE}, expected 301 or 302)"
+                    ALL_TESTS_PASSED=false
+                  fi
+
+                  # Test 5: Response time check
+                  echo ""
+                  echo "Test 5: Response time"
+                  RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}\n' --max-time 30 https://invictusumvs.net/)
+                  echo "Response time: ${RESPONSE_TIME}s"
+
+                  # Check if response time is acceptable (< 3 seconds)
+                  if (( $(echo "$RESPONSE_TIME > 3" | bc -l) )); then
+                    echo "⚠️ Warning: Slow response time (${RESPONSE_TIME}s > 3s)"
+                    echo "This is a warning only, not blocking deployment"
+                  else
+                    echo "✅ Response time is good (${RESPONSE_TIME}s)"
+                  fi
+
+                  # Final verdict
+                  echo ""
+                  if [ "$ALL_TESTS_PASSED" = true ]; then
+                    echo "✅ All critical health checks passed!"
+                    exit 0
+                  else
+                    echo "❌ One or more critical health checks failed!"
+                    exit 1
+                  fi
+
+            # ----------------------------------------------------------------------
+            # Store Deployment Metadata
+            # ----------------------------------------------------------------------
+            - name: Store deployment metadata
+              run: |
+                  echo "📝 Storing deployment metadata..."
+
+                  cat > deployment-info.json << EOF
+                  {
+                    "commit": "${{ github.sha }}",
+                    "branch": "main",
+                    "actor": "${{ github.actor }}",
+                    "timestamp": "${{ steps.deploy.outputs.deployment-time }}",
+                    "workflow_run": "${{ github.run_id }}",
+                    "workflow_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                    "health_checks_passed": true,
+                    "manual_trigger": ${{ github.event_name == 'workflow_dispatch' }},
+                    "cloudfront_invalidation_id": "${{ steps.invalidate.outputs.invalidation-id }}"
+                  }
+                  EOF
+
+                  # Upload metadata to backup location
+                  aws s3 cp deployment-info.json \
+                    s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/current/deployment-info.json
+
+                  echo "✅ Deployment metadata stored"
+
+            # ----------------------------------------------------------------------
+            # Rollback on Failure
+            # ----------------------------------------------------------------------
+            - name: Rollback on failure
+              if: failure()
+              run: |
+                  echo "🚨 Production deployment failed! Initiating automatic rollback..."
+
+                  # Check if backup exists
+                  if aws s3 ls s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/current/ > /dev/null 2>&1; then
+                    echo "♻️ Backup found. Restoring previous production version..."
+                    
+                    # Restore from backup
+                    aws s3 sync \
+                      s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/current/ \
+                      s3://${{ secrets.PRODUCTION_S3_BUCKET }} \
+                      --delete \
+                      --exclude "deployment-info.json"
+                    
+                    # Invalidate CloudFront cache
+                    echo "🔄 Invalidating CloudFront cache after rollback..."
+                    aws cloudfront create-invalidation \
+                      --distribution-id ${{ secrets.PRODUCTION_CLOUDFRONT_ID }} \
+                      --paths "/*"
+                    
+                    echo "✅ Rollback completed - previous production version restored"
+                    echo "⚠️ The workflow will still be marked as failed to alert the team"
+                    
+                    # Still exit with error to mark workflow as failed
+                    exit 1
+                  else
+                    echo "❌ No backup available!"
+                    echo "This might be the first deployment, or backups were cleared."
+                    echo "🚨 CRITICAL: Manual intervention required!"
+                    exit 1
+                  fi
+
+            # ----------------------------------------------------------------------
+            # Tag Successful Release
+            # ----------------------------------------------------------------------
+            - name: Tag production release
+              if: success() && github.event_name == 'push'
+              run: |
+                  echo "🏷️ Tagging successful production release..."
+
+                  # Configure git
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+
+                  # Create semantic version tag
+                  VERSION_TAG="v$(date +%Y.%m.%d)-${GITHUB_SHA:0:7}"
+                  git tag -a "$VERSION_TAG" \
+                    -m "Production release: ${{ steps.deploy.outputs.deployment-time }}"
+
+                  # Push tag to repository
+                  git push origin "$VERSION_TAG"
+
+                  echo "✅ Created tag: ${VERSION_TAG}"
+
+            # ----------------------------------------------------------------------
+            # Deployment Summary
+            # ----------------------------------------------------------------------
+            - name: Create deployment summary
+              if: always()
+              run: |
+                  # Create GitHub Actions job summary
+                  echo "## 🎉 Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+
+                  # Basic info
+                  echo "**Status:** \`${{ job.status }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+                  echo "**URL:** https://invictusumvs.net" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+
+                  # Deployment details
+                  echo "### Deployment Details" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Deployed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Time:** ${{ steps.deploy.outputs.deployment-time }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **CloudFront Invalidation:** \`${{ steps.invalidate.outputs.invalidation-id }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+
+                  # Trigger type
+                  if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+                    echo "**Trigger:** Manual deployment" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "**Trigger:** Automatic (merge to main branch)" >> $GITHUB_STEP_SUMMARY
+                  fi
+                  echo "" >> $GITHUB_STEP_SUMMARY
+
+                  # Status-specific message
+                  if [ "${{ job.status }}" == "success" ]; then
+                    echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "All health checks passed. Production is live!" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "**Live URLs:**" >> $GITHUB_STEP_SUMMARY
+                    echo "- https://invictusumvs.net" >> $GITHUB_STEP_SUMMARY
+                    echo "- https://www.invictusumvs.net" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "### ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "Automatic rollback was executed. Check logs for details." >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "**Next steps:**" >> $GITHUB_STEP_SUMMARY
+                    echo "1. Review workflow logs" >> $GITHUB_STEP_SUMMARY
+                    echo "2. Fix the issue in a new branch" >> $GITHUB_STEP_SUMMARY
+                    echo "3. Deploy through normal process (develop → staging → main)" >> $GITHUB_STEP_SUMMARY
+                  fi
+
+            # ----------------------------------------------------------------------
+            # Notifications (Optional - Uncomment when Slack configured)
+            # ----------------------------------------------------------------------
+            # - name: Notify team
+            #   if: always()
+            #   uses: 8398a7/action-slack@v3
+            #   with:
+            #     status: ${{ job.status }}
+            #     channel: ${{ job.status == 'success' && '#releases' || '#critical-alerts' }}
+            #     text: |
+            #       ${{ job.status == 'success' && '🎉 **PRODUCTION DEPLOYED SUCCESSFULLY** 🎉' || '🚨 **PRODUCTION DEPLOYMENT FAILED**' }}
+            #
+            #       📦 **Release Info:**
+            #       • Commit: ${{ github.sha }}
+            #       • Deployed by: ${{ github.actor }}
+            #       • Time: ${{ steps.deploy.outputs.deployment-time }}
+            #
+            #       ${{ job.status == 'success' && '🌐 **Live site:** https://invictusumvs.net\n\n✅ All health checks passed' || '❌ **Status:** Automatic rollback executed\n\n🔗 **Check logs:** ' }}${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            #   env:
+            #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    # ==========================================================================
+    # JOB 2: Emergency Rollback
+    # ==========================================================================
+    emergency-rollback:
+        name: Emergency Rollback
+        runs-on: ubuntu-latest
+
+        # Only run for manual workflow dispatch with rollback action
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'emergency-rollback'
+
+        # Separate emergency environment for additional safety
+        environment:
+            name: production-emergency
+
+        steps:
+            # ----------------------------------------------------------------------
+            # AWS Authentication
+            # ----------------------------------------------------------------------
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: ${{ secrets.AWS_ROLE_ARN_PRODUCTION }}
+                  aws-region: ${{ env.AWS_REGION }}
+
+            # ----------------------------------------------------------------------
+            # Execute Rollback
+            # ----------------------------------------------------------------------
+            - name: Execute emergency rollback
+              id: rollback
+              run: |
+                  echo "🚨 Executing emergency rollback for PRODUCTION..."
+                  echo "Triggered by: ${{ github.actor }}"
+                  echo "Time: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+                  # Check if backup exists
+                  if aws s3 ls s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/current/ > /dev/null 2>&1; then
+                    echo "♻️ Backup found. Restoring previous version..."
+                    
+                    # Restore from backup
+                    aws s3 sync \
+                      s3://${{ secrets.PRODUCTION_S3_BUCKET }}-backup/current/ \
+                      s3://${{ secrets.PRODUCTION_S3_BUCKET }} \
+                      --delete \
+                      --exclude "deployment-info.json"
+                    
+                    # Invalidate CloudFront cache
+                    echo "🔄 Invalidating CloudFront cache..."
+                    INVALIDATION_ID=$(aws cloudfront create-invalidation \
+                      --distribution-id ${{ secrets.PRODUCTION_CLOUDFRONT_ID }} \
+                      --paths "/*" \
+                      --query 'Invalidation.Id' \
+                      --output text)
+                    
+                    echo "Invalidation ID: ${INVALIDATION_ID}"
+                    
+                    echo "✅ Emergency rollback completed"
+                    echo "rollback-time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+                  else
+                    echo "❌ No backup available!"
+                    echo "Cannot perform automatic rollback."
+                    echo "🚨 CRITICAL: Manual intervention required!"
+                    exit 1
+                  fi
+
+            # ----------------------------------------------------------------------
+            # Verify Rollback
+            # ----------------------------------------------------------------------
+            - name: Verify rollback
+              run: |
+                  echo "🔍 Verifying rollback..."
+                  sleep 60  # Wait for CloudFront propagation
+
+                  # Test main domain
+                  if curl -f --retry 5 --retry-delay 10 --max-time 30 https://invictusumvs.net/; then
+                    echo "✅ Rollback verification passed - site is accessible"
+                  else
+                    echo "❌ Rollback verification failed - site is NOT accessible"
+                    echo "🚨 CRITICAL: Manual intervention required!"
+                    exit 1
+                  fi
+
+            # ----------------------------------------------------------------------
+            # Rollback Summary
+            # ----------------------------------------------------------------------
+            - name: Create rollback summary
+              if: always()
+              run: |
+                  echo "## 🔄 Emergency Rollback Summary" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "**Status:** \`${{ job.status }}\`" >> $GITHUB_STEP_SUMMARY
+                  echo "**Environment:** Production" >> $GITHUB_STEP_SUMMARY
+                  echo "**Action:** Emergency Rollback" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "### Rollback Details" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Executed by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+                  echo "- **Time:** ${{ steps.rollback.outputs.rollback-time }}" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+
+                  if [ "${{ job.status }}" == "success" ]; then
+                    echo "### ✅ Rollback Successful" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "Production has been restored to the previous version." >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "**⚠️ Next steps:**" >> $GITHUB_STEP_SUMMARY
+                    echo "1. Investigate the issue that caused the need for rollback" >> $GITHUB_STEP_SUMMARY
+                    echo "2. Fix the problem in a new feature branch" >> $GITHUB_STEP_SUMMARY
+                    echo "3. Test thoroughly on staging" >> $GITHUB_STEP_SUMMARY
+                    echo "4. Deploy through normal process (develop → staging → main → production)" >> $GITHUB_STEP_SUMMARY
+                  else
+                    echo "### ❌ Rollback Failed" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "🚨 **CRITICAL: Manual recovery required!**" >> $GITHUB_STEP_SUMMARY
+                    echo "" >> $GITHUB_STEP_SUMMARY
+                    echo "1. Check AWS S3 console for backups" >> $GITHUB_STEP_SUMMARY
+                    echo "2. Check CloudFront distribution status" >> $GITHUB_STEP_SUMMARY
+                    echo "3. Contact DevOps team immediately" >> $GITHUB_STEP_SUMMARY
+                  fi
+
+            # ----------------------------------------------------------------------
+            # Notifications (Optional - Uncomment when Slack configured)
+            # ----------------------------------------------------------------------
+            # - name: Alert team
+            #   if: always()
+            #   uses: 8398a7/action-slack@v3
+            #   with:
+            #     status: ${{ job.status }}
+            #     channel: '#critical-alerts'
+            #     text: |
+            #       ${{ job.status == 'success' && '🔄' || '🚨' }} **EMERGENCY ROLLBACK ${{ job.status == 'success' && 'COMPLETED' || 'FAILED' }}**
+            #
+            #       **Executed by:** ${{ github.actor }}
+            #       **Time:** ${{ steps.rollback.outputs.rollback-time }}
+            #       **Status:** ${{ job.status == 'success' && 'Production restored to previous version' || 'Rollback failed - manual intervention required' }}
+            #
+            #       ⚠️ **Next steps:** ${{ job.status == 'success' && 'Investigate issue and prepare new fix' || 'URGENT: Manual recovery needed' }}
+            #   env:
+            #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

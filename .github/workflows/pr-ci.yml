@@ -3,111 +3,285 @@ name: Pull Request CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    branches: [develop, main]
+    paths:
+      # Source code
+      - "src/**"
+      - "public/**"
+
+      # Dependencies (need full CI)
+      - "package.json"
+      - "package-lock.json"
+
+      # Configuration files (need full CI)
+      - "tsconfig.json"
+      - "jsconfig.json"
+      - "vite.config.js"
+      - "vitest.config.*.js"
+      - ".eslintrc.cjs"
+      - ".prettierrc"
+
+      # Workflow itself
+      - ".github/workflows/pr-ci.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+env:
+  NODE_VERSION: "20"
+  # 🎯 TOGGLE: Set to 'false' when team is ready for strict enforcement
+  ONBOARDING_MODE: "true"
 
 jobs:
   quality-gates:
     name: Quality Gates
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    env:
-      CI: true
-    
-    steps:
-      - name: Check PR mergeable state
-        id: pr-check
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
-            });
-            
-            const mergeable = pr.data.mergeable;
-            const mergeableState = pr.data.mergeable_state;
-            
-            core.info(`Mergeable: ${mergeable}`);
-            core.info(`Mergeable state: ${mergeableState}`);
-            
-            if (mergeable === false) {
-              core.warning('⚠️ PR has merge conflicts');
-              core.setOutput('has_conflicts', 'true');
-            } else if (mergeable === null) {
-              core.info('Merge status not yet determined by GitHub');
-              core.setOutput('has_conflicts', 'unknown');
-            } else {
-              core.info('✅ PR is mergeable');
-              core.setOutput('has_conflicts', 'false');
-            }
 
-      - name: Checkout PR branch
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: npm
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint source code
-        run: npm run lint
-
-      - name: Run tests
-        run: npm run test -- --coverage --watchAll=false
-
-      - name: Run dependency audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
+      # ============================================
+      # 🔴 TIER 1: ALWAYS REQUIRED (Strict)
+      # ============================================
 
       - name: Build application
+        id: build
         run: npm run build
         env:
           NODE_ENV: production
+        continue-on-error: false # ✅ Always strict - broken build = broken app
 
-      - name: Verify build artifacts
+      - name: Verify build output
         run: |
           if [ ! -d "dist" ]; then
-            echo "Build failed: dist directory not created"
+            echo "❌ Build failed: dist directory not created"
             exit 1
           fi
+
+          if [ ! -f "dist/index.html" ]; then
+            echo "❌ Build failed: index.html not found"
+            exit 1
+          fi
+
+          echo "✅ Build verification passed"
+        continue-on-error: false # ✅ Always strict
+
+      # ============================================
+      # 🟡 TIER 2: QUALITY CHECKS (Onboarding Mode)
+      # ============================================
+
+      - name: Run linting
+        id: lint
+        run: npm run lint
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
+
+      - name: Check code formatting
+        id: format
+        run: npm run format:check
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
+
+      - name: Type checking
+        id: type-check
+        if: hashFiles('tsconfig.json') != ''
+        run: npm run type-check || npx tsc --noEmit
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
+
+      - name: Run unit tests
+        id: unit-tests
+        run: npm run test:unit
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
+
+      - name: Run integration tests
+        id: integration-tests
+        run: npm run test:integration
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
+
+      # ============================================
+      # 🟢 TIER 3: SECURITY (Warnings Only)
+      # ============================================
+
+      - name: Run security audit
+        id: security
+        run: npm run ci:security
+        continue-on-error: true # ⚠️ Always warn-only (some vulnerabilities might be unfixable)
+
+      - name: Security scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+        continue-on-error: true # ⚠️ Warn-only during initial setup
+
+      - name: Upload security scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results.sarif"
+        continue-on-error: true
+
+      # ============================================
+      # 📦 ARTIFACTS (Always Store)
+      # ============================================
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: pr-build-${{ github.event.pull_request.number }}
-          path: dist
+          path: dist/
           retention-days: 7
           if-no-files-found: error
 
-      - name: Report results
+      # ============================================
+      # 📊 REPORTING (Show What Needs Fixing)
+      # ============================================
+
+      - name: Report results with onboarding guidance
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const status = '${{ job.status }}';
-            const hasConflicts = '${{ steps.pr-check.outputs.has_conflicts }}';
-            
-            let emoji = status === 'success' ? '✅' : '❌';
-            let message = `${emoji} CI checks ${status}`;
-            
-            if (hasConflicts === 'true') {
-              message += '\n\n⚠️ **Merge conflicts detected** - Resolve conflicts before merging.';
-              message += '\n\n_Note: Tests ran on your branch in isolation. After resolving conflicts, tests will automatically run again._';
+            const onboardingMode = '${{ env.ONBOARDING_MODE }}' === 'true';
+            const prNumber = context.payload.pull_request.number;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const lintStatus = '${{ steps.lint.outcome }}';
+            const formatStatus = '${{ steps.format.outcome }}';
+            const typeCheckStatus = '${{ steps.type-check.outcome }}';
+            const securityStatus = '${{ steps.security.outcome }}';
+            const unitTestStatus = '${{ steps.unit-tests.outcome }}';
+            const integrationTestStatus = '${{ steps.integration-tests.outcome }}';
+            const buildStatus = '${{ steps.build.outcome }}';
+
+            const getEmoji = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              if (status === 'skipped') return '⏭️';
+              return '⚠️';
+            };
+
+            const getStatusText = (status, isOnboarding) => {
+              if (status === 'success') return '✅ Passed';
+              if (status === 'failure') {
+                return isOnboarding ? '⚠️ Failed (not blocking)' : '❌ Failed (blocking)';
+              }
+              if (status === 'skipped') return '⏭️ Skipped';
+              return '⚠️ Unknown';
+            };
+
+            let body = '';
+
+            if (onboardingMode) {
+              body += `## 🎓 Onboarding Mode Active
+
+            This PR is running in **onboarding mode**. Quality checks that fail will **not block merging** so the team can gradually improve code quality.
+
+            `;
             }
-            
-            message += `\n\nWorkflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            
+
+            body += `### CI Pipeline Results
+
+            | Check | Status | Enforcement |
+            |-------|--------|-------------|
+            | Build | ${getEmoji(buildStatus)} ${buildStatus} | 🔴 Always Required |
+            | Linting | ${getEmoji(lintStatus)} ${lintStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Formatting | ${getEmoji(formatStatus)} ${formatStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Type Check | ${getEmoji(typeCheckStatus)} ${typeCheckStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Unit Tests | ${getEmoji(unitTestStatus)} ${unitTestStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Integration Tests | ${getEmoji(integrationTestStatus)} ${integrationTestStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
+            | Security Audit | ${getEmoji(securityStatus)} ${securityStatus} | 🟢 Warning Only |
+            `;
+
+            // Show what needs attention
+            const issues = [];
+            if (lintStatus === 'failure') issues.push('Linting');
+            if (formatStatus === 'failure') issues.push('Code Formatting');
+            if (typeCheckStatus === 'failure') issues.push('Type Checking');
+            if (unitTestStatus === 'failure') issues.push('Unit Tests');
+            if (integrationTestStatus === 'failure') issues.push('Integration Tests');
+
+            if (issues.length > 0) {
+              body += `
+            ### 🔧 Items Needing Attention
+
+            The following checks failed but are not blocking during onboarding:
+            ${issues.map(issue => `- ${issue}`).join('\n')}
+
+            **Action Items:**
+            `;
+              
+              if (issues.includes('Linting')) {
+                body += `
+            - **Fix linting**: Run \`npm run lint\` locally
+            `;
+              }
+              if (issues.includes('Code Formatting')) {
+                body += `
+            - **Fix formatting**: Run \`npm run format\` locally
+            `;
+              }
+              if (issues.includes('Type Checking')) {
+                body += `
+            - **Fix types**: Review TypeScript errors
+            `;
+              }
+              if (issues.includes('Unit Tests') || issues.includes('Integration Tests')) {
+                body += `
+            - **Fix tests**: Review test failures and update code or tests
+            `;
+              }
+            } else if (onboardingMode && status === 'success') {
+              body += `
+            ### 🎉 Excellent Work!
+
+            All quality checks passed! This PR is ready for strict enforcement mode.
+            `;
+            }
+
+            if (buildStatus === 'success') {
+              body += `
+            ### 📦 Build Artifacts
+
+            [Download build artifacts →](${runUrl})
+
+            **How to test:**
+            1. Click the link above
+            2. Scroll to "Artifacts" section  
+            3. Download \`pr-build-${prNumber}\`
+            4. Extract and open \`dist/index.html\`
+            `;
+            }
+
+            if (onboardingMode) {
+              body += `
+            ---
+
+            💡 **Tip**: Once the team has addressed common issues, disable onboarding mode by changing \`ONBOARDING_MODE: 'false'\` in the workflow file.
+            `;
+            }
+
+            body += `
+
+            [View full workflow run →](${runUrl})`;
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: message
+              issue_number: prNumber,
+              body: body
             });
