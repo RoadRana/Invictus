@@ -4,6 +4,25 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [develop, main]
+    paths:
+      # Source code
+      - "src/**"
+      - "public/**"
+
+      # Dependencies (need full CI)
+      - "package.json"
+      - "package-lock.json"
+
+      # Configuration files (need full CI)
+      - "tsconfig.json"
+      - "jsconfig.json"
+      - "vite.config.js"
+      - "vitest.config.*.js"
+      - ".eslintrc.cjs"
+      - ".prettierrc"
+
+      # Workflow itself
+      - ".github/workflows/pr-ci.yml"
 
 permissions:
   contents: read
@@ -11,15 +30,15 @@ permissions:
   security-events: write
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
   # 🎯 TOGGLE: Set to 'false' when team is ready for strict enforcement
-  ONBOARDING_MODE: 'true'
+  ONBOARDING_MODE: "true"
 
 jobs:
   quality-gates:
     name: Quality Gates
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,7 +47,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -36,13 +55,13 @@ jobs:
       # ============================================
       # 🔴 TIER 1: ALWAYS REQUIRED (Strict)
       # ============================================
-      
+
       - name: Build application
         id: build
         run: npm run build
         env:
           NODE_ENV: production
-        continue-on-error: false  # ✅ Always strict - broken build = broken app
+        continue-on-error: false # ✅ Always strict - broken build = broken app
 
       - name: Verify build output
         run: |
@@ -50,14 +69,14 @@ jobs:
             echo "❌ Build failed: dist directory not created"
             exit 1
           fi
-          
+
           if [ ! -f "dist/index.html" ]; then
             echo "❌ Build failed: index.html not found"
             exit 1
           fi
-          
+
           echo "✅ Build verification passed"
-        continue-on-error: false  # ✅ Always strict
+        continue-on-error: false # ✅ Always strict
 
       # ============================================
       # 🟡 TIER 2: QUALITY CHECKS (Onboarding Mode)
@@ -66,28 +85,28 @@ jobs:
       - name: Run linting
         id: lint
         run: npm run lint
-        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
 
       - name: Check code formatting
         id: format
         run: npm run format:check
-        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
 
       - name: Type checking
         id: type-check
         if: hashFiles('tsconfig.json') != ''
         run: npm run type-check || npx tsc --noEmit
-        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
 
       - name: Run unit tests
         id: unit-tests
         run: npm run test:unit
-        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
 
       - name: Run integration tests
         id: integration-tests
         run: npm run test:integration
-        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }}  # 🎯 Lenient during onboarding
+        continue-on-error: ${{ env.ONBOARDING_MODE == 'true' }} # 🎯 Lenient during onboarding
 
       # ============================================
       # 🟢 TIER 3: SECURITY (Warnings Only)
@@ -96,23 +115,23 @@ jobs:
       - name: Run security audit
         id: security
         run: npm run ci:security
-        continue-on-error: true  # ⚠️ Always warn-only (some vulnerabilities might be unfixable)
+        continue-on-error: true # ⚠️ Always warn-only (some vulnerabilities might be unfixable)
 
       - name: Security scan with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-        continue-on-error: true  # ⚠️ Warn-only during initial setup
+          scan-type: "fs"
+          scan-ref: "."
+          format: "sarif"
+          output: "trivy-results.sarif"
+          severity: "CRITICAL,HIGH"
+        continue-on-error: true # ⚠️ Warn-only during initial setup
 
       - name: Upload security scan results
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
         continue-on-error: true
 
       # ============================================
@@ -140,7 +159,7 @@ jobs:
             const onboardingMode = '${{ env.ONBOARDING_MODE }}' === 'true';
             const prNumber = context.payload.pull_request.number;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            
+
             const lintStatus = '${{ steps.lint.outcome }}';
             const formatStatus = '${{ steps.format.outcome }}';
             const typeCheckStatus = '${{ steps.type-check.outcome }}';
@@ -148,14 +167,14 @@ jobs:
             const unitTestStatus = '${{ steps.unit-tests.outcome }}';
             const integrationTestStatus = '${{ steps.integration-tests.outcome }}';
             const buildStatus = '${{ steps.build.outcome }}';
-            
+
             const getEmoji = (status) => {
               if (status === 'success') return '✅';
               if (status === 'failure') return '❌';
               if (status === 'skipped') return '⏭️';
               return '⚠️';
             };
-            
+
             const getStatusText = (status, isOnboarding) => {
               if (status === 'success') return '✅ Passed';
               if (status === 'failure') {
@@ -164,19 +183,19 @@ jobs:
               if (status === 'skipped') return '⏭️ Skipped';
               return '⚠️ Unknown';
             };
-            
+
             let body = '';
-            
+
             if (onboardingMode) {
               body += `## 🎓 Onboarding Mode Active
-            
+
             This PR is running in **onboarding mode**. Quality checks that fail will **not block merging** so the team can gradually improve code quality.
-            
+
             `;
             }
-            
+
             body += `### CI Pipeline Results
-            
+
             | Check | Status | Enforcement |
             |-------|--------|-------------|
             | Build | ${getEmoji(buildStatus)} ${buildStatus} | 🔴 Always Required |
@@ -187,7 +206,7 @@ jobs:
             | Integration Tests | ${getEmoji(integrationTestStatus)} ${integrationTestStatus} | ${onboardingMode ? '🟡 Informational' : '🔴 Required'} |
             | Security Audit | ${getEmoji(securityStatus)} ${securityStatus} | 🟢 Warning Only |
             `;
-            
+
             // Show what needs attention
             const issues = [];
             if (lintStatus === 'failure') issues.push('Linting');
@@ -195,14 +214,14 @@ jobs:
             if (typeCheckStatus === 'failure') issues.push('Type Checking');
             if (unitTestStatus === 'failure') issues.push('Unit Tests');
             if (integrationTestStatus === 'failure') issues.push('Integration Tests');
-            
+
             if (issues.length > 0) {
               body += `
             ### 🔧 Items Needing Attention
-            
+
             The following checks failed but are not blocking during onboarding:
             ${issues.map(issue => `- ${issue}`).join('\n')}
-            
+
             **Action Items:**
             `;
               
@@ -229,17 +248,17 @@ jobs:
             } else if (onboardingMode && status === 'success') {
               body += `
             ### 🎉 Excellent Work!
-            
+
             All quality checks passed! This PR is ready for strict enforcement mode.
             `;
             }
-            
+
             if (buildStatus === 'success') {
               body += `
             ### 📦 Build Artifacts
-            
+
             [Download build artifacts →](${runUrl})
-            
+
             **How to test:**
             1. Click the link above
             2. Scroll to "Artifacts" section  
@@ -247,19 +266,19 @@ jobs:
             4. Extract and open \`dist/index.html\`
             `;
             }
-            
+
             if (onboardingMode) {
               body += `
             ---
-            
+
             💡 **Tip**: Once the team has addressed common issues, disable onboarding mode by changing \`ONBOARDING_MODE: 'false'\` in the workflow file.
             `;
             }
-            
+
             body += `
-            
+
             [View full workflow run →](${runUrl})`;
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
