@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';  // Import Link and useNavigate for navigation
 import banner from '../assets/banner photo.png';
 import Banner from '../shared/Banner';

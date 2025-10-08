@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Banner from '../shared/Banner';
 import { FaFacebookF, FaTwitter, FaGooglePlusG, FaLinkedinIn, FaInstagram } from "react-icons/fa";
 import banner from '../assets/banner photo.png'; // Ensure the image path is correct

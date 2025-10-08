@@ -1,17 +1,14 @@
 // src/components/SignUp.js
-import React, { useState, useEffect } from 'react';
+import  { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Signup.css'; // Ensure this file exists with the styles defined below
 import Banner from '../shared/Banner';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShip, faCamera, faWater, faTv } from '@fortawesome/free-solid-svg-icons'; // Import submarine icon
 import Logo from './Logo'; // Import the Logo component
 import { Link } from 'react-router-dom';
 import banner from '../assets/banner photo1.png'; // Ensure the image path is correct
 
 
 const SignUp = () => {
-    const bannerImage = "../assets/banner photo1.png"; // Replace with the actual path to your image
     const heading = "Create your account";
     const subheading = "We are dedicated to revolutionizing the maritime industry with our eco-friendly, intelligent unmanned marine vehicles. Our mission is to innovate and lead the way in marine technology, ensuring a sustainable and efficient future for the industry.";
 

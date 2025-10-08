@@ -1,9 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import  { useEffect, useRef, useState } from 'react';
 import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from "react-icons/fa";
 import { Link } from 'react-router-dom';
 import * as THREE from 'three';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import StaffLogin from './Stafflogin'; // Import StaffLogin component
 
 const Navbar = () => {

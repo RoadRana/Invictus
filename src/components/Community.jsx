@@ -1,10 +1,8 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom'; // Import Routes and Route instead of Switch
 import './Community.css';
-import Profile from './Profile';
 
 const Community = () => {
-    const [comments, setComments] = React.useState([
+    const [comments] = React.useState([
         { username: 'Alice', comment: 'This is my first post!', timestamp: '2024-09-08' },
         { username: 'Bob', comment: 'Loving this community!', timestamp: '2024-09-07' },
         { username: 'Charlie', comment: 'Anyone working on marine robotics?', timestamp: '2024-09-06' },

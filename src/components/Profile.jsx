@@ -1,5 +1,3 @@
-// src/components/Profile.js
-import React from 'react';
 import './Profile.css';
 import Banner from '../shared/Banner';
 import banner from '../assets/banner photo1.png';
@@ -9,7 +7,6 @@ const Profile = () => {
     const username = localStorage.getItem('username') || 'User';
     const email = localStorage.getItem('email') || 'user@example.com';
 
-    const bannerImage = "src/assets/banner photo.png"; // Replace with the actual path to your image
     const heading = `Welcome ${username} to your profile`;
     const subheading = "";
 

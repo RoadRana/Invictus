@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect ,useMemo} from 'react';
 import { useNavigate } from 'react-router-dom';
 import Banner from '../shared/Banner';
 import banner from '../assets/banner photo1.png';
@@ -252,39 +252,53 @@ const Products = () => {
 };
 
 // Reusable Section Component for Dynamic Modules with Quantity Input
-const Section = ({ title, items, onAddToCart }) => (
+
+const Section = ({ title, items, onAddToCart }) => {
+  const ids = useMemo(() => items.map((it, i) => it.id ?? i), [items]);
+  const [qty, setQty] = useState(() =>
+    Object.fromEntries(ids.map((id) => [id, 1]))
+  );
+
+  const setQuantity = (id, val) =>
+    setQty((q) => ({ ...q, [id]: Math.max(1, val || 1) }));
+
+  return (
     <div className="bg-gray-100 p-6 mt-8 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
-        <div className="space-y-6">
-            {items.map((item, index) => {
-                const [quantity, setQuantity] = useState(1); // State for item quantity
-                return (
-                    <div key={index} className="p-4 bg-white rounded-lg shadow-md flex flex-col md:flex-row md:justify-between md:items-center hover:shadow-lg transition-shadow duration-300">
-                        <div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.title}</h3>
-                            <p className="text-gray-600 mb-4">{item.description}</p>
-                        </div>
-                        <div className="flex items-center space-x-4 mt-4 md:mt-0">
-                            <input
-                                type="number"
-                                min="1"
-                                value={quantity}
-                                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                                placeholder="Qty"
-                                className="w-20 p-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                            />
-                            <button
-                                onClick={() => onAddToCart(item, quantity)}
-                                className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
-                            >
-                                Add to Cart
-                            </button>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">{title}</h2>
+      <div className="space-y-6">
+        {items.map((item, i) => {
+          const id = item.id ?? i;
+          return (
+            <div key={id} className="p-4 bg-white rounded-lg shadow-md flex flex-col md:flex-row md:justify-between md:items-center hover:shadow-lg transition-shadow duration-300">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{item.title}</h3>
+                <p className="text-gray-600 mb-4">{item.description}</p>
+              </div>
+              <div className="flex items-center space-x-4 mt-4 md:mt-0">
+                <input
+                  type="number"
+                  min="1"
+                  value={qty[id] ?? 1}
+                  onChange={(e) => setQuantity(id, parseInt(e.target.value, 10))}
+                  placeholder="Qty"
+                  className="w-20 p-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <button
+                  onClick={() => onAddToCart(item, qty[id] ?? 1)}
+                  className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
+                >
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-);
+  );
+};
+
+
+
 
 export default Products;
