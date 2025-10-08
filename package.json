@@ -16,6 +16,7 @@
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "vitest run --config vitest.config.unit.js",
     "test:integration": "vitest run --config vitest.config.integration.js",
+    "security:scan": "npm audit --audit-level=high || echo 'Audit found issues'",
     "ci:security": "npm audit --omit=dev --audit-level=high",
     "preview": "vite preview"
   },
