@@ -1,5 +1,5 @@
 // src/components/Logo.js
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import './Logo.css';
 
 const Logo = () => {

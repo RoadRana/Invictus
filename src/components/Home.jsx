@@ -1,11 +1,9 @@
-import React from 'react';
 import Banner from '../shared/Banner';
 import { Link } from 'react-router-dom';
 import { FaCogs, FaBrain, FaLeaf, FaDollarSign, FaBullseye, FaDatabase, FaClock, FaShieldAlt } from 'react-icons/fa';
 import banner from '../assets/banner photo1.png'; // Ensure the image path is correct
 
 const Home = () => {
-    const bannerImage = "src/assets/banner photo.png";
     const heading = "Innovating Green, Navigating Blue";
     const subheading = "Revolutionizing Maritime Industries with Eco-Friendly, Intelligent Unmanned Marine Vehicles.";
     const sectionImage = "src/assets/banner photo1.png"; // Replace with the actual path to your section image

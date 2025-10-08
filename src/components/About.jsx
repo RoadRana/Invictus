@@ -1,4 +1,3 @@
-import React from 'react';
 import Banner from '../shared/Banner';
 import { FaLinkedin } from 'react-icons/fa'; // LinkedIn icon
 import banner from '../assets/banner photo.png'; // Make sure the path is correct
