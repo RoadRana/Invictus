@@ -21,7 +21,7 @@ const Home = () => {
     "Revolutionizing Maritime Industries with Eco-Friendly, Intelligent Unmanned Marine Vehicles.";
 
   return (
-    <div className="mt-20">
+    <div className="mt-20 ">
       {/* Hero */}
       <Banner banner={banner} heading={heading} subheading={subheading}>
         <div className="flex justify-start gap-8 mt-12">

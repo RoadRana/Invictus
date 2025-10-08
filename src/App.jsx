@@ -14,6 +14,8 @@ import InfrastructureInspectionAndMaintenance from "./components/InfrastructureI
 import ScrollToTop from "./components/ScrollToTop";
 import CustomizePage from "./components/CustomizePage";
 import CreateRobot from "./components/CreateRobotPage";
+import StaffLogin from "./components/Stafflogin";
+import OperationsPage from "./components/Operations";
 
 function App() {
   return (
@@ -37,16 +39,19 @@ function App() {
             {/* <Route path="/community" element={<Community />} /> */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/signup" element={<SignUp />} />
-                      <Route path="/signin" element={<SignIn />} />
-          </Routes>
+            <Route path="/profile/:id" element={<Profile />} />
 
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/operations" element={<OperationsPage />} />
+
+            {/* <Route path="/staffoperations" element={<StaffOperations />} />
+            <Route path="/stafflogin" element={<StaffLogin />} /> */}
+          </Routes>
         </div>
         <Footer />
       </div>
-
     </Router>
-
   );
 
 }

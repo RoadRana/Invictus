@@ -2,7 +2,8 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-
+  background-color: black;
+  color: gray-100;
 }
 nav{
   z-index: 1001 !important;
