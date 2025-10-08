@@ -1,15 +1,15 @@
-import  {  useState } from 'react';
 import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from "react-icons/fa";
 import {FaLinkedinIn} from "/Users/rana.adel@dragons-group.com/Downloads/personal/INVICTUS-WebApp/Invictus/node_modules/react-icons/fa/index";
 import { Link } from 'react-router-dom';
 import logo from '../assets/logo.jpeg';
+import  { useState } from "react";
 
 
 
 const Navbar = () => {
   /** @type {import('react').MutableRefObject<HTMLDivElement | null>} */
-  const logoRef = useRef(null);
-
+const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleMenu = () => setIsMenuOpen((v) => !v);
     const navItems = [
         { link: 'Home', path: 'home' },
         { link: 'About', path: 'about' },

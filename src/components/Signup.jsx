@@ -4,7 +4,6 @@ import "./Signup.css";
 import Banner from "../shared/Banner";
 import Logo from "./Logo";
 import banner from "../assets/banner photo1.png";
-import StaffLogin from "./Stafflogin.jsx";
 import apiConfig from "../config/api";
 
 // Avoid double slashes when joining URLs
@@ -178,9 +177,7 @@ const SignUp = () => {
             Already have an account? <Link to="/signin">Sign In</Link>
           </div>
 
-          <div className="staff-login">
-            <StaffLogin />
-          </div>
+          
         </div>
       </div>
     </div>

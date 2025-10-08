@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import About from "./components/About";
-import Community from "./components/Community";
+// import Community from "./components/Community";
 import Profile from "./components/Profile";
 import Services from "./components/Services";
 import Products from "./components/Products";
@@ -14,13 +14,15 @@ import InfrastructureInspectionAndMaintenance from "./components/InfrastructureI
 import ScrollToTop from "./components/ScrollToTop";
 import CustomizePage from "./components/CustomizePage";
 import CreateRobot from "./components/CreateRobotPage";
-import StaffLogin from "./components/Stafflogin";
+// import StaffLogin from "./components/Stafflogin";
 import OperationsPage from "./components/Operations";
 
 function App() {
   return (
-    <Router basename="/Invictus" future={{ v7_relativeSplatPath: true }}>
-      <ScrollToTop />
+  <Router
+      basename="/Invictus"
+      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+    >      <ScrollToTop />
       <div className="app-container">
         <Navbar />
         <div className="content-container">
