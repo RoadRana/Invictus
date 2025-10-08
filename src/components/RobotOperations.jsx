@@ -1,8 +1,5 @@
 import { useState } from 'react';
 
-
-
-
 const RobotOperations = () => {
   const [robotType, setRobotType] = useState('');
   const [robotModel, setRobotModel] = useState('');

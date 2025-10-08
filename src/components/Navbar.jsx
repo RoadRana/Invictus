@@ -1,5 +1,5 @@
-import  { useEffect, useRef,useState } from 'react';
-import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from "react-icons/fa";
+import { useEffect, useRef, useState } from 'react';
+import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import * as THREE from 'three';
 import StaffLogin from './Stafflogin'; // Import StaffLogin component
@@ -17,9 +17,8 @@ const Navbar = () => {
     { link: 'Contact', path: 'contact' },
   ];
 
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const toggleMenu = () => setIsMenuOpen(v => !v);
+  const toggleMenu = () => setIsMenuOpen((v) => !v);
 
   useEffect(() => {
     const mount = logoRef.current;
@@ -40,13 +39,13 @@ const Navbar = () => {
     light.position.set(5, 5, 5);
     scene.add(light);
 
-    /** @type {number} */ let rafId;  // requestAnimationFrame id is a number in browsers
+    /** @type {number} */ let rafId; // requestAnimationFrame id is a number in browsers
     const tick = () => {
       rafId = requestAnimationFrame(tick);
       renderer.render(scene, camera);
     };
     tick();
-return () => {
+    return () => {
       if (rafId !== undefined) cancelAnimationFrame(rafId);
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);

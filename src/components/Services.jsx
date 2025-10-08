@@ -1,11 +1,11 @@
-import  { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';  // Import Link and useNavigate for navigation
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate for navigation
 import banner from '../assets/banner photo.png';
 import Banner from '../shared/Banner';
-import infraImage from "../components/services2_05.png";
-import oceanImage from "../assets/services2_09.png";
-import environmentalImage from "../components/services2_14.png";
-import maritimeImage from "../components/services2_19.png";
+import infraImage from '../components/services2_05.png';
+import oceanImage from '../assets/services2_09.png';
+import environmentalImage from '../components/services2_14.png';
+import maritimeImage from '../components/services2_19.png';
 
 const Services = () => {
   useEffect(() => {
