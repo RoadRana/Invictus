@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import  { useState } from 'react';
 
 const ServiceOperations = () => {
   const [service, setService] = useState('');
@@ -6,15 +6,13 @@ const ServiceOperations = () => {
   const [serviceDescription, setServiceDescription] = useState('');
   const [serviceApproach, setServiceApproach] = useState('');
 
-  /** @type {import('react').FormEventHandler<HTMLFormElement>} */
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Add your logic for submitting the selected data
-    console.log('Selected Service:', service);
-    console.log('Service Name:', serviceName);
-    console.log('Service Description:', serviceDescription);
-    console.log('Service Approach:', serviceApproach);
-  };
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        console.log('Selected Service:', service);
+        console.log('Service Name:', serviceName);
+        console.log('Service Description:', serviceDescription);
+        console.log('Service Approach:', serviceApproach);
+    };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-800">

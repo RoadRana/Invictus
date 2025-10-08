@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import  { useState } from 'react';
 
 const RobotOperations = () => {
   const [robotType, setRobotType] = useState('');
@@ -7,16 +7,14 @@ const RobotOperations = () => {
   const [componentModel, setComponentModel] = useState('');
   const [robotIcon, setRobotIcon] = useState('');
 
-  /** @type {import('react').FormEventHandler<HTMLFormElement>} */
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Add your logic for submitting the selected data
-    console.log('Selected Robot Type:', robotType);
-    console.log('Selected Robot Model:', robotModel);
-    console.log('Selected Component Type:', componentType);
-    console.log('Selected Component Model:', componentModel);
-    console.log('Selected Robot Icon:', robotIcon);
-  };
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        console.log('Selected Robot Type:', robotType);
+        console.log('Selected Robot Model:', robotModel);
+        console.log('Selected Component Type:', componentType);
+        console.log('Selected Component Model:', componentModel);
+        console.log('Selected Robot Icon:', robotIcon);
+    };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-800">
