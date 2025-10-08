@@ -21,25 +21,42 @@ const Navbar = () => {
 
     const logoRef = useRef(null);
 
-    useEffect(() => {
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, 100 / 100, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(100, 100);
-        logoRef.current.appendChild(renderer.domElement);
+useEffect(() => {
+  const mount = logoRef.current;
+  if (!mount) return;
 
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(5, 5, 5);
-        scene.add(light);
+  const width = 100;
+  const height = 100;
 
-        camera.position.z = 3;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+  camera.position.z = 3;
 
-        return () => {
-            if (logoRef.current) {
-                logoRef.current.removeChild(renderer.domElement);
-            }
-        };
-    }, []);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(width, height);
+  mount.appendChild(renderer.domElement);
+
+  const light = new THREE.PointLight(0xffffff, 1, 100);
+  light.position.set(5, 5, 5);
+  scene.add(light);
+
+  let rafId;
+  const tick = () => {
+    rafId = requestAnimationFrame(tick);
+    renderer.render(scene, camera);
+  };
+  tick();
+
+  return () => {
+    cancelAnimationFrame(rafId);
+    // Use the captured 'mount', not logoRef.current
+    if (mount.contains(renderer.domElement)) {
+      mount.removeChild(renderer.domElement);
+    }
+    renderer.dispose();
+  };
+}, []);
+
 
     return (
         <>
