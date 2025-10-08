@@ -1,12 +1,11 @@
 // src/components/SignUp.js
-import  { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Signup.css'; // Ensure this file exists with the styles defined below
 import Banner from '../shared/Banner';
 import Logo from './Logo'; // Import the Logo component
 import { Link } from 'react-router-dom';
 import banner from '../assets/banner photo1.png'; // Ensure the image path is correct
-
 
 const SignUp = () => {
   const heading = 'Create your account';
@@ -23,7 +22,7 @@ const SignUp = () => {
     e.preventDefault();
     // Placeholder for sign-up logic
     // For now, just navigate to home page after sign-up
-    localStorage.setItem('authenticated', "true");
+    localStorage.setItem('authenticated', 'true');
     navigate('/home');
   };
 

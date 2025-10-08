@@ -2,12 +2,11 @@
 
 body {
   font-family: 'Roboto', sans-serif;
-
 }
-nav{
+nav {
   z-index: 1001 !important;
 }
 
 .gradientBg {
-  background: linear-gradient(90deg, #7BD5F5 0%, #787FF6 100%);
+  background: linear-gradient(90deg, #7bd5f5 0%, #787ff6 100%);
 }

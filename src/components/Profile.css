@@ -1,77 +1,77 @@
 /* src/components/Profile.css */
 .profile-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    min-height: 60vh;
-    background: linear-gradient(50deg, #3bace1 30%, #565dd9 30%);
-    border-radius: 10px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-    padding: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 60vh;
+  background: linear-gradient(50deg, #3bace1 30%, #565dd9 30%);
+  border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
 }
 
 .profile-card {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 300px;
-    width: 100%;
-    margin-right: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 300px;
+  width: 100%;
+  margin-right: 2rem;
 }
 
 .profile-photo {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 1rem;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1rem;
 }
 
 .profile-info {
-    text-align: center;
+  text-align: center;
 }
 
 .profile-info h2 {
-    margin: 0.5rem 0;
+  margin: 0.5rem 0;
 }
 
 .profile-info p {
-    margin: 0.5rem 0;
-    font-size: 1rem;
+  margin: 0.5rem 0;
+  font-size: 1rem;
 }
 
 .profile-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .profile-posts,
 .profile-services {
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    margin-bottom: 2rem;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
 }
 
 .profile-posts h3,
 .profile-services h3 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
 }
 
 .post,
 .service {
-    background: #f0f4f8;
-    border-radius: 5px;
-    padding: 1rem;
-    margin-bottom: 1rem;
+  background: #f0f4f8;
+  border-radius: 5px;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }

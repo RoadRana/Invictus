@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'; // Import Routes and Route
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom'; // Import Routes and Route
 import Navbar from './components/Navbar';
 import Home from './components/Home';
 import About from './components/About';
@@ -17,7 +22,6 @@ import CustomizePage from './components/CustomizePage';
 import CreateRobot from './components/CreateRobotPage'; // Assume you have this component
 // import CustomizeRobot from './components/CustomizeRobot'; // Assume you have this component
 
-
 function App() {
   return (
     <Router>
@@ -30,16 +34,19 @@ function App() {
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/home" element={<Home />} />
             <Route path="/about" element={<About />} />
-            <Route path='/services' element={<Services />} />
-            <Route path="/pipeline-inspection" element={<PipelineInspection />} /> {/* Add this route */}
-
-            <Route path='/products' element={<Products />} />
+            <Route path="/services" element={<Services />} />
+            <Route
+              path="/pipeline-inspection"
+              element={<PipelineInspection />}
+            />{' '}
+            {/* Add this route */}
+            <Route path="/products" element={<Products />} />
             <Route path="/customize" element={<CustomizePage />} />
-            <Route path="/create-robot" element={<CreateRobot />} /> {/* Add this route
+            <Route path="/create-robot" element={<CreateRobot />} />{' '}
+            {/* Add this route
             {/* <Route path="/customize-robot" element={<CustomizeRobot />} /> Add this route */}
-
             <Route path="/community" element={<Community />} />
-            <Route path='/contact' element={<Contact />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/profile" element={<Profile />} />
             {/* <Route path="/operations" element={<OperationsPage />} /> */}
             <Route path="/signup" element={<SignUp />} />
