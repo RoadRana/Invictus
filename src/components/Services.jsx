@@ -69,9 +69,7 @@ const Services = () => {
   const handleLinkClick = (section) => {
     setVisibleSection(visibleSection === section ? null : section);
   };
-  const handleLinkClick = (section) => {
-    setVisibleSection(visibleSection === section ? null : section);
-  };
+ 
 
   const handleContactClick = () => {
     navigate("/contact");

@@ -1,17 +1,11 @@
 import  {  useState } from 'react';
 import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from "react-icons/fa";
-import {FaLinkedinIn} from "/Users/rana.adel@dragons-group.com/Downloads/personal/INVICTUS/Invictus/node_modules/react-icons/fa/index";
+import {FaLinkedinIn} from "/Users/rana.adel@dragons-group.com/Downloads/personal/INVICTUS-WebApp/Invictus/node_modules/react-icons/fa/index";
 import { Link } from 'react-router-dom';
-<<<<<<< Updated upstream
 import logo from '../assets/logo.jpeg';
 
-=======
-import * as THREE from 'three';
-import logo from '../assets/logo.jpeg';
-import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
-import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
-import StaffLogin from './Stafflogin'; // Import StaffLogin component
->>>>>>> Stashed changes
+
+
 const Navbar = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const toggleMenu = () => {

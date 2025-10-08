@@ -9,8 +9,7 @@ const Footer = () => {
             <footer
                 className="rounded-x1 rounded-br-lg md:p-9 px-4 py-9 mt-3"
                 style={{ background: 'linear-gradient(90deg, #7BD5F5 0%, #007F73 100%)' }}
-                className="rounded-x1 rounded-br-lg md:p-9 px-4 py-9 mt-3"
-                style={{ background: 'linear-gradient(90deg, #7BD5F5 0%, #007F73 100%)' }}
+               
             >                <div className="container mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
                         <h3 className="text-xl font-bold mb-4 leading-snug text-white opacity-90">

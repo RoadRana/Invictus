@@ -57,7 +57,7 @@ const About = () => {
         }));
 
         setTeamMembers(teamMembersData);
-          console.log("Fetched team members:", teamMembersData);
+        console.log("Fetched team members:", teamMembersData);
       } catch (error) {
         console.error("Error fetching team members:", error);
         setError("Failed to load team members");
