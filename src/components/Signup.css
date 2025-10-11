@@ -1,16 +1,16 @@
-/* src/components/SignUp.css */
 .signup-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60vh;
-  background-color: whitesmoke;
-  border-radius: 10px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    background: linear-gradient(120deg, #fdfdfc 0%, #76bbdc 100%);
+    border-radius: 10px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    position: relative;
+
 }
 
 .signup-form {

@@ -1,34 +1,4 @@
-import { useState } from 'react';
-
-const RobotCard = ({ robot, onAdd }) => {
-  const [quantity, setQuantity] = useState(1);
-
-  return (
-    <div className="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center">
-      <h2 className="text-2xl font-semibold text-blue-700 mb-4">
-        {robot.name}
-      </h2>
-      <p className="text-gray-600 mb-4 text-center">{robot.description}</p>
-      <div className="flex items-center space-x-4 mt-4">
-        <input
-          type="number"
-          min="1"
-          value={quantity}
-          onChange={(e) =>
-            setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))
-          }
-          className="w-20 p-2 border border-gray-300 rounded-md text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-        />
-        <button
-          onClick={() => onAdd(robot, quantity)}
-          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-300"
-        >
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
-};
+import  { useState } from 'react';
 
 const CreateRobotPage = () => {
   const [cart, setCart] = useState([]);

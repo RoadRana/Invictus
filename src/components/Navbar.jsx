@@ -1,126 +1,81 @@
-import { useEffect, useRef, useState } from 'react';
-import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from 'react-icons/fa';
+import { FaFacebookF, FaTwitter, FaInstagram, FaBars } from "react-icons/fa";
+import {FaLinkedinIn} from "/Users/rana.adel@dragons-group.com/Downloads/personal/INVICTUS-WebApp/Invictus/node_modules/react-icons/fa/index";
 import { Link } from 'react-router-dom';
-import * as THREE from 'three';
-import StaffLogin from './Stafflogin'; // Import StaffLogin component
+import logo from '../assets/logo.jpeg';
+import  { useState } from "react";
+
+
 
 const Navbar = () => {
   /** @type {import('react').MutableRefObject<HTMLDivElement | null>} */
-  const logoRef = useRef(null);
-
-  const navItems = [
-    { link: 'Home', path: 'home' },
-    { link: 'About', path: 'about' },
-    { link: 'Services', path: 'services' },
-    { link: 'Products', path: 'products' },
-    { link: 'Community', path: 'community' },
-    { link: 'Contact', path: 'contact' },
-  ];
-
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleMenu = () => setIsMenuOpen((v) => !v);
+    const navItems = [
+        { link: 'Home', path: 'home' },
+        { link: 'About', path: 'about' },
+        { link: 'Services', path: 'services' },
+        { link: 'Products', path: 'products' },
+        // { link: 'Community', path: 'community' },
+        { link: 'Contact', path: 'contact' },
+    ];
 
-  useEffect(() => {
-    const mount = logoRef.current;
-    if (!mount) return;
 
-    const width = 100;
-    const height = 100;
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    camera.position.z = 3;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    mount.appendChild(renderer.domElement); // ok now
-
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(5, 5, 5);
-    scene.add(light);
-
-    /** @type {number} */ let rafId; // requestAnimationFrame id is a number in browsers
-    const tick = () => {
-      rafId = requestAnimationFrame(tick);
-      renderer.render(scene, camera);
-    };
-    tick();
-    return () => {
-      if (rafId !== undefined) cancelAnimationFrame(rafId);
-      if (mount.contains(renderer.domElement)) {
-        mount.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-    };
-  }, []);
-
-  return (
-    <>
-      {/* Fixed Navbar */}
-      <nav className="bg-white md:px-14 p-4 max-w-screen-2xl border-b mx-auto text-primary fixed top-0 right-0 left-0 z-50 shadow-md">
-        <div className="container mx-auto flex justify-between items-center font-medium">
-          <div className="flex space-x-14 items-center">
-            {/* Logo */}
-            <Link
-              to="/home"
-              className="text-2xl font-semibold flex items-center space-x-3 text-primary"
+    return (
+        <>
+            <nav
+                className='bg-white md:px-14 p-4 max-w border-b mx-auto text-primary fixed top-0 right-0 left-0 z-50 '
             >
-              <div ref={logoRef} className="w-16 h-16 inline-block"></div>
-              <span>Invictus</span>
-            </Link>
-            {/* Desktop Navigation */}
-            <ul className="md:flex space-x-12 hidden">
-              {navItems.map(({ link, path }) => (
-                <Link
-                  key={link}
-                  to={path}
-                  className="block hover:text-secondary"
-                >
-                  {link}
-                </Link>
-              ))}
-            </ul>
-          </div>
-          <div className="space-x-12 hidden md:flex items-center">
-            {/* Social Icons */}
-            <a
-              href="/"
-              className="hidden lg:flex items-center hover:text-secondary"
-            >
-              <FaFacebookF />
-            </a>
-            <a
-              href="/"
-              className="hidden lg:flex items-center hover:text-secondary"
-            >
-              <FaTwitter />
-            </a>
-            <a
-              href="/"
-              className="hidden lg:flex items-center hover:text-secondary"
-            >
-              <FaInstagram />
-            </a>
-            {/* Staff Login */}
-            <StaffLogin />
-            {/* Sign Up Button */}
-            <Link to="/signup">
-              <button className="bg-primary py-2 px-4 transition-all duration-300 text-white rounded hover:text-white hover:bg-indigo-600">
-                Sign Up
-              </button>
-            </Link>
-          </div>
-          {/* Mobile Menu Toggle */}
-          <div className="md:hidden">
-            <button
-              onClick={toggleMenu}
-              className="text-primary focus:outline-none focus:text-gray-300"
-            >
-              <FaBars className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-      </nav>
+                <div className='container mx-auto flex justify-between items-center font-medium'>
+                    <div className='flex space-x-14 items-center'>
+                        {/* Logo */}
+                        <Link to="/home">
+                            <div className="h-14 w-auto">
+                                <img src={logo} alt="Invictus Logo" className='h-full w-auto object-contain' />
+                            </div>
+                        </Link>
+                        {/* Desktop Navigation */}
+                        <ul className='md:flex space-x-12 hidden text-primary'>
+                            {navItems.map(({ link, path }) => (
+                                <Link key={link} to={path} className='block hover:text-secondary'>
+                                    {link}
+                                </Link>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className='space-x-12 hidden md:flex items-center'>
+                        {/* Social Icons */}
+                        <a href="/" className='hidden lg:flex items-center hover:text-secondary'>
+                            <FaFacebookF />
+                        </a>
+                        <a href="/" className='hidden lg:flex items-center hover:text-secondary'>
+                            <FaTwitter />
+                        </a>
+                        <a href="/" className='hidden lg:flex items-center hover:text-secondary'>
+                            <FaInstagram />
+                        </a>
+                        <a href="https://www.linkedin.com/company/invictusumvs/" className='hidden lg:flex items-center hover:text-secondary' target='_blank' rel='noopener noreferrer'>
+                            <FaLinkedinIn />
+                        </a>
+
+
+                        {/* Sign Up Button */}
+                        <Link
+    to="/signup"
+    className=" text-primary  hover:text-secondary"
+>
+    Sign Up
+</Link>
+                    </div>
+                    {/* Mobile Menu Toggle */}
+                    <div className='md:hidden'>
+                        <button onClick={toggleMenu} className='text-primary focus:outline-none focus:text-gray-300'>
+                            <FaBars className='w-6 h-6' />
+                        </button>
+                    </div>
+                </div>
+            </nav>
 
       {/* Mobile Menu */}
       <div

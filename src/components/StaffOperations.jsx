@@ -1,18 +1,17 @@
-import { useState } from 'react';
+import  { useState } from 'react';
 
 const StaffOperations = () => {
   const [role, setRole] = useState('');
   const [accountRole, setAccountRole] = useState('');
   const [viewUser, setViewUser] = useState('');
 
-  /** @type {import('react').FormEventHandler<HTMLFormElement>} */
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Add your logic for submitting the selected data
-    console.log('Selected Role:', role);
-    console.log('Selected Account Role:', accountRole);
-    console.log('Selected View User:', viewUser);
-  };
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        // logic for submitting the selected data
+        console.log('Selected Role:', role);
+        console.log('Selected Account Role:', accountRole);
+        console.log('Selected View User:', viewUser);
+    };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-800">
