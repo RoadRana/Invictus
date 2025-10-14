@@ -1,49 +1,46 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import "./Signup.css";
-import Banner from "../shared/Banner";
-import Logo from "./Logo";
-import banner from "../assets/banner photo1.png";
-import apiConfig from "../config/api";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import './Signup.css';
+import Banner from '../shared/Banner';
+import Logo from './Logo';
+import banner from '../assets/banner photo1.png';
+import apiConfig from '../config/api';
 
-// Avoid double slashes when joining URLs
 const joinURL = (base, path) =>
-  new URL(path.replace(/^\/+/, ""), base.replace(/\/+$/, "/")).toString();
+  new URL(path.replace(/^\/+/, ''), base.replace(/\/+$/, '/')).toString();
+const REGISTER_URL = joinURL(apiConfig.baseURL, 'users/api/register/');
 
-const REGISTER_URL = joinURL(apiConfig.baseURL, "users/api/register/");
-
-const SignUp = () => {
-  const heading = "Create your account";
+export default function SignUp() {
+  const heading = 'Create your Invictus account';
   const subheading =
-    "We are dedicated to revolutionizing the maritime industry with our eco-friendly, intelligent unmanned marine vehicles. Our mission is to innovate and lead the way in marine technology, ensuring a sustainable and efficient future for the industry.";
+    'Sign up to request quotes faster, track orders, and explore our ASV/ROV solutions. Built for professionals who value precision and sustainability.';
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState(""); // success/info message
-  const [error, setError] = useState(""); // error message
-
+  const [msg, setMsg] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
-    setError("");
-    setMsg("");
+    setError('');
+    setMsg('');
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError('Passwords do not match.');
       return;
     }
 
     setLoading(true);
     try {
       const res = await fetch(REGISTER_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         },
         body: JSON.stringify({
           name,
@@ -53,42 +50,29 @@ const SignUp = () => {
         }),
       });
 
-      // Try to parse any JSON response (errors or success)
       let data = null;
       try {
         data = await res.json();
-      } catch {
-        // non-JSON response
+      } catch (e) {
+       console.error(error)
       }
 
       if (!res.ok) {
-        // Prefer backend error message if present
         const backendMsg =
           data?.detail ||
           data?.message ||
           data?.error ||
-          (typeof data === "string" ? data : null);
+          (typeof data === 'string' ? data : null);
         setError(
           backendMsg || `Registration failed: ${res.status} ${res.statusText}`
         );
         return;
       }
 
-      // Success
-      setMsg("Account created successfully.");
-
-      // If your API returns a token and you want to auto-login, uncomment:
-      // if (data?.token) {
-      //   localStorage.setItem("token", data.token);
-      //   localStorage.setItem("authenticated", "true");
-      //   navigate("/home");
-      //   return;
-      // }
-
-      // Otherwise, send them to sign-in
-      navigate("/signin");
+      setMsg('Account created successfully.');
+      navigate('/signin');
     } catch (err) {
-      setError(err?.message || "Network error");
+      setError(err?.message || 'Network error');
     } finally {
       setLoading(false);
     }
@@ -96,92 +80,140 @@ const SignUp = () => {
 
   return (
     <div className="mt-20">
-      {/* If your Banner expects 'subsheading', change the prop name below to match */}
       <Banner banner={banner} heading={heading} subheading={subheading} />
 
-      <div className="signup-container container mx-auto py-12 px-4 md:px-0">
-        <Logo />
-
-        <div className="signup-form">
-          <h2>Create an Account</h2>
-
-          {/* Feedback messages */}
-          {error && (
-            <div className="mb-4 p-3 rounded-lg text-sm bg-rose-50 text-rose-700">
-              {error}
+      <section className="signup-wrap container mx-auto px-4 md:px-6 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+          {/* Brand column */}
+          <aside className="brand-card">
+            <div className="brand-card__inner">
+              <Logo />
+              <h2 className="brand-title text-primary">
+                Purpose-built for{' '}
+                <span className="accent-underline">marine teams</span>
+              </h2>
+              <p className="brand-sub">
+                Request quotes faster, track orders, and manage support in one
+                secure place.
+              </p>
+              <ul className="brand-list">
+                <li>
+                  <span>🔐</span> Enterprise-grade security
+                </li>
+                <li>
+                  <span>⚡</span> Rapid quoting & status updates
+                </li>
+                <li>
+                  <span>🌿</span> Sustainable by design
+                </li>
+              </ul>
+              <p className="brand-footnote">
+                Questions?{' '}
+                <Link to="/contact" className="link-primary">
+                  Contact us
+                </Link>
+              </p>
             </div>
-          )}
-          {msg && (
-            <div className="mb-4 p-3 rounded-lg text-sm bg-emerald-50 text-emerald-700">
-              {msg}
+          </aside>
+
+          {/* Form column */}
+          <div className="signup-container">
+            <div className="signup-form">
+              <h3 className="form-title text-primary">Create an Account</h3>
+
+              {error && <div className="alert alert-danger">{error}</div>}
+              {msg && <div className="alert alert-success">{msg}</div>}
+
+              <form onSubmit={handleSignUp} className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="name" className="label">
+                    Full Name
+                  </label>
+                  <input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
+                    required
+                    className="themed-input "
+                    placeholder="Your full name"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="email" className="label">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="email"
+                    required
+                    className="themed-input"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="password" className="label">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={6}
+                    required
+                    className="themed-input"
+                    placeholder="Minimum 6 characters"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="confirmPassword" className="label">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={6}
+                    required
+                    className="themed-input"
+                    placeholder="Retype your password"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className={`btn w-full h-11 px-5 ${loading ? 'btn--loading' : ''}`}
+                  disabled={loading}
+                  aria-busy={loading ? 'true' : 'false'}
+                >
+                  <span className="btn__label">
+                    {loading ? 'Signing up...' : 'Sign Up'}
+                  </span>
+                  <span className="btn__spinner" aria-hidden="true" />
+                </button>
+              </form>
+
+              <p className="signin-line">
+                Already have an account?{' '}
+                <Link to="/signin" className="link-primary">
+                  Sign In
+                </Link>
+              </p>
             </div>
-          )}
-
-          <form onSubmit={handleSignUp}>
-            <div className="form-group">
-              <label htmlFor="name">Full Name:</label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="email">Email:</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password">Password:</label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password:</label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-                minLength={6}
-                required
-              />
-            </div>
-
-            <button type="submit" className="signup-button" disabled={loading}>
-              {loading ? "Signing up..." : "Sign Up"}
-            </button>
-          </form>
-
-          <div className="signin-link mb-4">
-            Already have an account? <Link to="/signin">Sign In</Link>
           </div>
-
-          
         </div>
-      </div>
+      </section>
     </div>
   );
-};
-
-export default SignUp;
+}

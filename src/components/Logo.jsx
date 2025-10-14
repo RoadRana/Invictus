@@ -1,58 +1,74 @@
-// src/components/Logo.js
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import './Logo.css';
 
-const Logo = () => {
-  useEffect(() => {
-    // JavaScript to manipulate the SVG elements if needed
-    // Example: Simple animation for the robotic arm
-    const arm = document.querySelector('line');
-    const armAnimation = () => {
-      arm.animate(
-        [
-          { transform: 'rotate(0deg)', transformOrigin: '160px 100px' },
-          { transform: 'rotate(20deg)', transformOrigin: '160px 100px' },
-          { transform: 'rotate(0deg)', transformOrigin: '160px 100px' },
-        ],
-        {
-          duration: 2000,
-          iterations: Infinity,
-        }
-      );
-    };
+export default function Logo({ size = 200, title = 'Invictus ROV' }) {
+  const armRef = useRef(null);
 
-    armAnimation();
+  useEffect(() => {
+    const arm = armRef.current;
+    if (!arm) return;
+    let raf = 0;
+    let t0 = performance.now();
+    const loop = (t) => {
+      const dt = (t - t0) / 1000;
+      const angle = Math.sin(dt * Math.PI) * 10; 
+      arm.style.transform = `rotate(${angle}deg)`;
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (
-    <div className="logo-container">
-      <svg id="rovLogo" width="200" height="200" viewBox="0 0 200 200">
-        {/* Submarine Body */}
-        <ellipse cx="100" cy="100" rx="60" ry="30" fill="#007BFF" />
-        {/* Submarine Periscope */}
-        <rect x="90" y="50" width="20" height="50" fill="#007BFF" />
-        {/* Robotic Arm */}
-        <line
-          x1="160"
-          y1="100"
-          x2="190"
-          y2="80"
-          stroke="#007BFF"
-          strokeWidth="4"
+    <div className="logo-card" aria-label="Invictus Logo">
+      <svg
+        className="logo-svg"
+        width={size}
+        height={size}
+        viewBox="0 0 200 200"
+        role="img"
+        aria-labelledby="logoTitle"
+      >
+        <title id="logoTitle">{title}</title>
+
+        {/* Backplate */}
+        <rect
+          x="8"
+          y="8"
+          width="184"
+          height="184"
+          rx="20"
+          className="card-bg"
         />
-        <circle cx="190" cy="80" r="5" fill="#007BFF" />
+
         {/* Waves */}
         <path
-          d="M20,130 Q40,120 60,130 T100,130 T140,130 T180,130"
+          className="wave"
+          d="M20,135 Q40,125 60,135 T100,135 T140,135 T180,135"
           fill="none"
-          stroke="#00BFFF"
-          strokeWidth="4"
         />
+
+        {/* ROV */}
+        <g className="rov">
+          <ellipse cx="100" cy="100" rx="54" ry="26" />
+          <rect x="94" y="60" width="12" height="38" rx="3" />
+        </g>
+
+        {/* Arm */}
+        <g
+          className="arm"
+          ref={armRef}
+          style={{ transformOrigin: '160px 100px' }}
+        >
+          <line x1="160" y1="100" x2="186" y2="86" />
+          <circle cx="186" cy="86" r="5" />
+        </g>
       </svg>
-      <div className="logo-text">ROV</div>
-      <div className="tagline">Innovating Underwater Robotics</div>
+
+      <div className="logo-caption">
+        <h3 className="logo-title">ROV</h3>
+        <p className="logo-tag">Innovating Underwater Robotics</p>
+      </div>
     </div>
   );
-};
-
-export default Logo;
+}

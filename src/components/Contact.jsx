@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import Banner from "../shared/Banner";
+import { useState, useEffect, useRef } from 'react';
+import Banner from '../shared/Banner';
 import {
   FaFacebookF,
   FaTwitter,
@@ -10,9 +10,10 @@ import {
   FaChevronUp,
   FaPlus,
   FaMinus,
-} from "react-icons/fa";
-import banner from "../assets/banner photo.png";
-import apiConfig from "../config/api";
+} from 'react-icons/fa';
+import banner from '../assets/banner photo.png';
+import apiConfig from '../config/api';
+
 const Contact = () => {
   const [services, setServices] = useState([]);
   const [products, setProducts] = useState([]);
@@ -23,44 +24,39 @@ const Contact = () => {
   const [loading, setLoading] = useState({ services: true, products: true });
   const [errors, setErrors] = useState({ services: null, products: null });
   const [formData, setFormData] = useState({
-    name: "",
-    company_name: "",
-    description: "",
+    name: '',
+    company_name: '',
+    description: '',
   });
   const [quantities, setQuantities] = useState({});
 
-  const baseUrl = apiConfig.baseURL;
+  const baseUrl = apiConfig.baseURL.replace(/\/+$/, '');
   const token = apiConfig.token;
+  const didFetch = useRef(false);
+
   useEffect(() => {
-    // Fetch services from API
+    if (didFetch.current) return;
+    didFetch.current = true;
+
     const fetchServices = async () => {
       try {
         setLoading((prev) => ({ ...prev, services: true }));
         setErrors((prev) => ({ ...prev, services: null }));
 
-        const response = await fetch(
-          `${baseUrl}/services/api/services_list/`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await fetch(`${baseUrl}/services/api/services_list/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
-        // Extract the data array from the response
         setServices(result.data || []);
       } catch (error) {
-        console.error("Error fetching services:", error);
-        setErrors((prev) => ({ ...prev, services: "Failed to load services" }));
+        console.error('Error fetching services:', error);
+        setErrors((prev) => ({ ...prev, services: 'Failed to load services' }));
       } finally {
         setLoading((prev) => ({ ...prev, services: false }));
       }
     };
 
-    // Fetch products from API
     const fetchProducts = async () => {
       try {
         setLoading((prev) => ({ ...prev, products: true }));
@@ -69,20 +65,15 @@ const Contact = () => {
         const response = await fetch(
           `${baseUrl}/products/api/component_model_list`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
-        // Extract the data array from the response
         setProducts(result.data || []);
       } catch (error) {
-        console.error("Error fetching products:", error);
-        setErrors((prev) => ({ ...prev, products: "Failed to load products" }));
+        console.error('Error fetching products:', error);
+        setErrors((prev) => ({ ...prev, products: 'Failed to load products' }));
       } finally {
         setLoading((prev) => ({ ...prev, products: false }));
       }
@@ -90,11 +81,10 @@ const Contact = () => {
 
     fetchServices();
     fetchProducts();
-  }, []);
+  }, [baseUrl, token]);
 
   const toggleServiceDropdown = () => {
     setIsServiceDropdownOpen(!isServiceDropdownOpen);
-    // Close product dropdown when opening service dropdown
     if (!isServiceDropdownOpen && isProductDropdownOpen) {
       setIsProductDropdownOpen(false);
     }
@@ -102,7 +92,6 @@ const Contact = () => {
 
   const toggleProductDropdown = () => {
     setIsProductDropdownOpen(!isProductDropdownOpen);
-    // Close service dropdown when opening product dropdown
     if (!isProductDropdownOpen && isServiceDropdownOpen) {
       setIsServiceDropdownOpen(false);
     }
@@ -110,24 +99,16 @@ const Contact = () => {
 
   const selectService = (service) => {
     setSelectedService(service);
-    // Initialize quantity to 1 if not already set
     if (!quantities[`service-${service.id}`]) {
-      setQuantities((prev) => ({
-        ...prev,
-        [`service-${service.id}`]: 1,
-      }));
+      setQuantities((prev) => ({ ...prev, [`service-${service.id}`]: 1 }));
     }
     setIsServiceDropdownOpen(false);
   };
 
   const selectProduct = (product) => {
     setSelectedProduct(product);
-    // Initialize quantity to 1 if not already set
     if (!quantities[`product-${product.id}`]) {
-      setQuantities((prev) => ({
-        ...prev,
-        [`product-${product.id}`]: 1,
-      }));
+      setQuantities((prev) => ({ ...prev, [`product-${product.id}`]: 1 }));
     }
     setIsProductDropdownOpen(false);
   };
@@ -136,54 +117,36 @@ const Contact = () => {
     const key = `${type}-${id}`;
     const currentQuantity = quantities[key] || 1;
     const newQuantity = Math.max(1, currentQuantity + amount);
-
-    setQuantities((prev) => ({
-      ...prev,
-      [key]: newQuantity,
-    }));
+    setQuantities((prev) => ({ ...prev, [key]: newQuantity }));
   };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [id]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isServiceDropdownOpen || isProductDropdownOpen) {
-        const dropdowns = document.querySelectorAll(".dropdown-container");
+        const dropdowns = document.querySelectorAll('.dropdown-container');
         let isClickInside = false;
-
         dropdowns.forEach((dropdown) => {
-          if (dropdown.contains(event.target)) {
-            isClickInside = true;
-          }
+          if (dropdown.contains(event.target)) isClickInside = true;
         });
-
         if (!isClickInside) {
           setIsServiceDropdownOpen(false);
           setIsProductDropdownOpen(false);
         }
       }
     };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isServiceDropdownOpen, isProductDropdownOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare items in the correct format
     const items = [];
-
-    // Add product if selected
     if (selectedProduct) {
       items.push({
         product: selectedProduct.id,
@@ -191,8 +154,6 @@ const Contact = () => {
         quantity: quantities[`product-${selectedProduct.id}`] || 1,
       });
     }
-
-    // Add service if selected
     if (selectedService) {
       items.push({
         product: null,
@@ -201,115 +162,137 @@ const Contact = () => {
       });
     }
 
-    // Prepare the complete payload
     const payload = {
       name: formData.name,
       company_name: formData.companyName,
       description: formData.message,
-      items: items,
+      items,
     };
 
     try {
       const response = await fetch(`${baseUrl}/orders/api/create_order/`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const errorData = await response;
-        throw new Error(errorData.message || "Failed to send order data");
+        let errBody;
+        try {
+          errBody = await response.json();
+        } catch {
+          errBody = await response.text();
+        }
+        throw new Error(
+          errBody?.message ||
+            (typeof errBody === 'string'
+              ? errBody
+              : 'Failed to send order data')
+        );
       }
 
-      const data = await response;
-      console.log("Order data sent successfully:", data);
-      alert("Order submitted successfully!");
+      await response.json().catch(() => null);
+      alert('Order submitted successfully!');
 
-      // Reset form
-      setFormData({
-        name: "",
-        company_name: "",
-        description: "",
-      });
+      setFormData({ name: '', company_name: '', description: '' });
       setSelectedProduct(null);
       setSelectedService(null);
       setQuantities({});
     } catch (error) {
-      console.error("Error submitting order:", error);
+      console.error('Error submitting order:', error);
       alert(`Failed to submit order: ${error.message}`);
     }
   };
 
+  const inputClass =
+    'w-full h-11 px-3 rounded-2xl bg-[var(--field-bg)] border border-primary text-[var(--field-text)] ' +
+    'placeholder:text-[var(--field-placeholder)] hover:border-[var(--field-hover-border)] focus:outline-none ' +
+    'focus:border-[var(--field-focus-border)] focus:ring-4 focus:ring-[var(--field-ring)] transition-colors';
+
+  const selectBtnClass =
+    'w-full h-11 px-3 rounded-2xl bg-[var(--field-bg)] border border-primary text-[var(--field-text)] ' +
+    'hover:border-[var(--field-hover-border)] focus:outline-none focus:border-[var(--field-focus-border)] ' +
+    'focus:ring-4 focus:ring-[var(--field-ring)] flex items-center justify-between transition-colors';
+
+  const qtyBtnClass =
+    'inline-flex items-center justify-center h-8 w-8 rounded-full bg-[var(--chip-bg)] text-[var(--field-text)] ' +
+    'hover:bg-white/16 transition-colors';
+
   return (
-    <div className="mt-20">
+    <div>
       <Banner banner={banner} heading="Contact Us" />
-      <div className="container mx-auto py-12 px-4 md:px-0">
+
+      <div className="container mx-auto py-12 px-4 md:px-6">
         <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">
           Get in Touch
         </h2>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Basic Contact Form */}
-          <div className="bg-white p-6 rounded-lg shadow-lg">
+          {/* Form */}
+          <div className="rounded-3xl p-6 bg-[var(--surface)]/90 backdrop-blur border border-white/10 shadow-soft">
             <form onSubmit={handleSubmit}>
-              <div className="mb-4">
+              {/* Name */}
+              <div className="mb-5">
                 <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
+                  className="block text-sm font-semibold text-[var(--muted)] mb-2"
                   htmlFor="name"
                 >
                   Name
                 </label>
                 <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="name"
                   type="text"
                   placeholder="Your Name"
+                  className={inputClass}
                   value={formData.name}
                   onChange={handleInputChange}
                   required
                 />
               </div>
-              <div className="mb-4">
+
+              {/* Company Name */}
+              <div className="mb-5">
                 <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
+                  className="block text-sm font-semibold text-[var(--muted)] mb-2"
                   htmlFor="companyName"
                 >
                   Company Name
                 </label>
                 <input
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="companyName"
                   type="text"
                   placeholder="Your Company Name"
-                  value={formData.companyName}
+                  className={inputClass}
+                  value={formData.companyName || ''}
                   onChange={handleInputChange}
                   required
                 />
               </div>
-              <div className="mb-4 relative dropdown-container">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
+
+              {/* Service dropdown */}
+              <div className="mb-5 relative dropdown-container">
+                <label className="block text-sm font-semibold text-[var(--muted)] mb-2">
                   Select a Service
                 </label>
                 <div className="relative">
                   <button
                     type="button"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex items-center justify-between"
+                    className={selectBtnClass}
                     onClick={toggleServiceDropdown}
                     disabled={loading.services}
                   >
-                    <span>
+                    <span className="truncate">
                       {selectedService?.name ||
                         (loading.services
-                          ? "Loading services..."
-                          : "Choose a Service")}
+                          ? 'Loading services...'
+                          : 'Choose a Service')}
                     </span>
                     {loading.services ? (
                       <svg
-                        className="animate-spin h-5 w-5 text-gray-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
+                        className="animate-spin h-1 w-5 text-[var(--muted)]"
                         viewBox="0 0 24 24"
                       >
                         <circle
@@ -319,12 +302,12 @@ const Contact = () => {
                           r="10"
                           stroke="currentColor"
                           strokeWidth="4"
-                        ></circle>
+                        />
                         <path
                           className="opacity-75"
                           fill="currentColor"
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                        />
                       </svg>
                     ) : isServiceDropdownOpen ? (
                       <FaChevronUp />
@@ -332,34 +315,36 @@ const Contact = () => {
                       <FaChevronDown />
                     )}
                   </button>
+
                   {errors.services && (
-                    <p className="text-red-500 text-xs italic mt-1">
+                    <p className="text-danger text-xs mt-1">
                       {errors.services}
                     </p>
                   )}
+
                   {isServiceDropdownOpen && (
-                    <ul className="absolute z-10 bg-white border rounded shadow-lg mt-1 w-full max-h-60 overflow-y-auto">
+                    <ul className="relative z-10 mt-1 w-full max-h-60 overflow-y-auto bg-[var(--surface)]/95 backdrop-blur border border-white/10 rounded-2xl shadow-soft">
                       {services.length > 0 ? (
                         services.map((service) => (
                           <li
                             key={service.id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="px-4 py-2 hover:bg-white/6 cursor-pointer"
                           >
                             <div
                               className="flex justify-between items-center"
                               onClick={() => selectService(service)}
                             >
-                              <span>{service.name}</span>
+                              <span className="truncate">{service.name}</span>
                               {selectedService?.id === service.id && (
                                 <div
-                                  className="flex items-center space-x-2 ml-4"
+                                  className="flex items-center gap-2 ml-4"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
                                     type="button"
-                                    className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                                    className={qtyBtnClass}
                                     onClick={() =>
-                                      updateQuantity("service", service.id, -1)
+                                      updateQuantity('service', service.id, -1)
                                     }
                                   >
                                     <FaMinus size={12} />
@@ -369,9 +354,9 @@ const Contact = () => {
                                   </span>
                                   <button
                                     type="button"
-                                    className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                                    className={qtyBtnClass}
                                     onClick={() =>
-                                      updateQuantity("service", service.id, 1)
+                                      updateQuantity('service', service.id, 1)
                                     }
                                   >
                                     <FaPlus size={12} />
@@ -382,22 +367,25 @@ const Contact = () => {
                           </li>
                         ))
                       ) : (
-                        <li className="px-4 py-2 text-gray-500">
+                        <li className="px-4 py-2 text-[var(--muted)]">
                           No services available
                         </li>
                       )}
                     </ul>
                   )}
                 </div>
+
                 {selectedService && (
-                  <div className="mt-2 flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">Quantity:</span>
-                    <div className="flex items-center space-x-2">
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm text-[var(--muted)]">
+                      Quantity:
+                    </span>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                        className={qtyBtnClass}
                         onClick={() =>
-                          updateQuantity("service", selectedService.id, -1)
+                          updateQuantity('service', selectedService.id, -1)
                         }
                       >
                         <FaMinus size={12} />
@@ -407,9 +395,9 @@ const Contact = () => {
                       </span>
                       <button
                         type="button"
-                        className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                        className={qtyBtnClass}
                         onClick={() =>
-                          updateQuantity("service", selectedService.id, 1)
+                          updateQuantity('service', selectedService.id, 1)
                         }
                       >
                         <FaPlus size={12} />
@@ -418,28 +406,28 @@ const Contact = () => {
                   </div>
                 )}
               </div>
-              <div className="mb-4 relative dropdown-container">
-                <label className="block text-gray-700 text-sm font-bold mb-2">
+
+              {/* Product dropdown */}
+              <div className="mb-5 relative dropdown-container">
+                <label className="block text-sm font-semibold text-[var(--muted)] mb-2">
                   Select a Product
                 </label>
                 <div className="relative">
                   <button
                     type="button"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex items-center justify-between"
+                    className={selectBtnClass}
                     onClick={toggleProductDropdown}
                     disabled={loading.products}
                   >
-                    <span>
+                    <span className="truncate">
                       {selectedProduct?.model_name ||
                         (loading.products
-                          ? "Loading products..."
-                          : "Choose a Product")}
+                          ? 'Loading products...'
+                          : 'Choose a Product')}
                     </span>
                     {loading.products ? (
                       <svg
-                        className="animate-spin h-5 w-5 text-gray-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
+                        className="animate-spin h-5 w-5 text-[var(--muted)]"
                         viewBox="0 0 24 24"
                       >
                         <circle
@@ -449,12 +437,12 @@ const Contact = () => {
                           r="10"
                           stroke="currentColor"
                           strokeWidth="4"
-                        ></circle>
+                        />
                         <path
                           className="opacity-75"
                           fill="currentColor"
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                        />
                       </svg>
                     ) : isProductDropdownOpen ? (
                       <FaChevronUp />
@@ -462,38 +450,38 @@ const Contact = () => {
                       <FaChevronDown />
                     )}
                   </button>
+
                   {errors.products && (
-                    <p className="text-red-500 text-xs italic mt-1">
+                    <p className="text-danger text-xs mt-1">
                       {errors.products}
                     </p>
                   )}
+
                   {isProductDropdownOpen && (
-                    <ul className="absolute z-10 bg-white border rounded shadow-lg mt-1 w-full max-h-60 overflow-y-auto">
+                    <ul className="relative z-10 mt-1 w-full max-h-60 overflow-y-auto bg-[var(--surface)]/95 backdrop-blur border border-white/10 rounded-2xl shadow-soft">
                       {products.length > 0 ? (
                         products.map((product) => (
                           <li
                             key={product.id}
-                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="px-4 py-2 hover:bg-white/6 cursor-pointer"
                           >
                             <div
                               className="flex justify-between items-center"
                               onClick={() => selectProduct(product)}
                             >
-                              <span>{product.model_name}</span>
+                              <span className="truncate">
+                                {product.model_name}
+                              </span>
                               {selectedProduct?.id === product.id && (
                                 <div
-                                  className="flex items-center space-x-2 ml-4"
+                                  className="flex items-center gap-2 ml-4"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
                                     type="button"
-                                    className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                                    className={qtyBtnClass}
                                     onClick={() =>
-                                      updateQuantity(
-                                        "product",
-                                        product.id,
-                                        -1
-                                      )
+                                      updateQuantity('product', product.id, -1)
                                     }
                                   >
                                     <FaMinus size={12} />
@@ -503,13 +491,9 @@ const Contact = () => {
                                   </span>
                                   <button
                                     type="button"
-                                    className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                                    className={qtyBtnClass}
                                     onClick={() =>
-                                      updateQuantity(
-                                        "product",
-                                        product.id,
-                                        1
-                                      )
+                                      updateQuantity('product', product.id, 1)
                                     }
                                   >
                                     <FaPlus size={12} />
@@ -520,22 +504,25 @@ const Contact = () => {
                           </li>
                         ))
                       ) : (
-                        <li className="px-4 py-2 text-gray-500">
+                        <li className="px-4 py-2 text-[var(--muted)]">
                           No products available
                         </li>
                       )}
                     </ul>
                   )}
                 </div>
+
                 {selectedProduct && (
-                  <div className="mt-2 flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">Quantity:</span>
-                    <div className="flex items-center space-x-2">
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-sm text-[var(--muted)]">
+                      Quantity:
+                    </span>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                        className={qtyBtnClass}
                         onClick={() =>
-                          updateQuantity("product", selectedProduct.id, -1)
+                          updateQuantity('product', selectedProduct.id, -1)
                         }
                       >
                         <FaMinus size={12} />
@@ -545,9 +532,9 @@ const Contact = () => {
                       </span>
                       <button
                         type="button"
-                        className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"
+                        className={qtyBtnClass}
                         onClick={() =>
-                          updateQuantity("product", selectedProduct.id, 1)
+                          updateQuantity('product', selectedProduct.id, 1)
                         }
                       >
                         <FaPlus size={12} />
@@ -556,44 +543,46 @@ const Contact = () => {
                   </div>
                 )}
               </div>
-              <div className="mb-4">
+
+              {/* Message */}
+              <div className="mb-6">
                 <label
-                  className="block text-gray-700 text-sm font-bold mb-2"
+                  className="block text-sm font-semibold text-[var(--muted)] mb-2"
                   htmlFor="message"
                 >
                   Message
                 </label>
                 <textarea
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                   id="message"
-                  placeholder="Your Message"
                   rows="4"
-                  value={formData.message}
+                  placeholder="Your Message"
+                  className={inputClass + ' min-h-[120px] py-3 resize-y'}
+                  value={formData.message || ''}
                   onChange={handleInputChange}
                   required
-                ></textarea>
+                />
               </div>
-              <button
-                className="ml-4 py-2 px-4 rounded shadow-sm bg-gradient-to-r from-blue-500 to-teal-400 bg-clip-text text-transparent hover:text-gray-200 transition duration-300"
-                type="submit"
-              >
+
+              <button type="submit" className="btn h-11 px-5">
                 Send Message
               </button>
             </form>
           </div>
 
           {/* Contact Information */}
-          <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="rounded-3xl p-6 bg-[var(--surface)]/90 backdrop-blur border border-white/10 shadow-soft">
             <h3 className="text-xl font-semibold text-primary mb-4">
               Contact Info
             </h3>
-            <p className="text-gray-600 mb-4">
-              <strong>Call Us</strong>
+
+            <p className="text-[var(--muted)] mb-4">
+              <strong className="text-[var(--text)]">Call Us</strong>
               <br />
               ‭+201006584054‬
             </p>
-            <p className="text-gray-600 mb-4">
-              <strong>Our Email</strong>
+
+            <p className="text-[var(--muted)] mb-4">
+              <strong className="text-[var(--text)]">Our Email</strong>
               <br />
               <a
                 href="mailto:info@invictusumvs.com"
@@ -602,36 +591,39 @@ const Contact = () => {
                 info@invictusumvs.com
               </a>
             </p>
-            <p className="text-gray-600 mb-4">
-              <strong>Our Location</strong>
+
+            <p className="text-[var(--muted)] mb-4">
+              <strong className="text-[var(--text)]">Our Location</strong>
               <br />
               398 Abu Qir Street, Mostafa Kamel, Al Fanar Tower, Alexandria
               Governorate
             </p>
-            <p className="text-gray-600 mb-4">
-              <strong>Working Hours</strong>
+
+            <p className="text-[var(--muted)] mb-5">
+              <strong className="text-[var(--text)]">Working Hours</strong>
               <br />
-              Mon-Fri: 10AM-5PM
+              Mon–Fri: 10AM–5PM
               <br />
-              Sat-Sun: 10AM-1PM
+              Sat–Sun: 10AM–1PM
             </p>
-            <p className="text-gray-600 mb-4">
-              <strong>Follow Us</strong>
+
+            <p className="text-[var(--muted)] mb-3">
+              <strong className="text-[var(--text)]">Follow Us</strong>
             </p>
-            <div className="flex space-x-4">
-              <a href="/" className="text-primary hover:text-gray-600">
+            <div className="flex gap-4">
+              <a href="/" className="text-primary hover:text-secondary">
                 <FaFacebookF />
               </a>
-              <a href="/" className="text-primary hover:text-gray-600">
+              <a href="/" className="text-primary hover:text-secondary">
                 <FaTwitter />
               </a>
-              <a href="/" className="text-primary hover:text-gray-600">
+              <a href="/" className="text-primary hover:text-secondary">
                 <FaGooglePlusG />
               </a>
-              <a href="/" className="text-primary hover:text-gray-600">
+              <a href="/" className="text-primary hover:text-secondary">
                 <FaLinkedinIn />
               </a>
-              <a href="/" className="text-primary hover:text-gray-600">
+              <a href="/" className="text-primary hover:text-secondary">
                 <FaInstagram />
               </a>
             </div>

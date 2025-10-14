@@ -1,68 +1,76 @@
-/* src/components/Logo.css */
-.logo-container {
-  text-align: left;
-  margin-right: 20rem;
-  display: inline-block;
-  transition: transform 0.3s ease-in-out;
-  background-color: #7bd5f5;
-  /* Add a dark background color */
-  padding: 10px;
-  /* Add padding to give some space around the logo */
-  border-radius: 8px;
-  /* Optionally, round the corners */
+/* Card container */
+.logo-card {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: var(--surface);              
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08);
+  margin: 0;
+}
+html.dark .logo-card {
+  border-color: rgba(255,255,255,0.10);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.30), 0 8px 24px rgba(0,0,0,0.40);
 }
 
-.logo-container:hover {
-  transform: scale(1.05);
+/* SVG sizing */
+.logo-svg { display: block; width: min(42vw, 260px); height: auto; }
+
+.card-bg {
+  fill: var(--surface, #ffffff);                    /* need change */
 }
 
-#rovLogo {
-  width: 150px;
-  height: 150px;
-  transition: transform 0.3s ease-in-out;
+/* ROV shapes — explicit brand with fallback */
+.rov ellipse,
+.rov rect {
+  fill: var(--color-primary, #007F73);
 }
 
-.logo-container:hover #rovLogo {
-  transform: rotate(-5deg) scale(1.1);
+/* Arm — explicit brand with fallback */
+.arm line {
+  stroke: var(--color-primary, #007F73);
+  stroke-width: 4;
+}
+.arm circle {
+  fill: var(--color-primary, #007F73);
 }
 
-.logo-text {
-  font-family: Arial, sans-serif;
-  font-size: 24px;
-  color: #ffffff;
-  /* Change text color to white */
-  margin-top: 0.5rem;
-  transition: color 0.3s ease-in-out;
+/* Waves — explicit secondary with fallback */
+.wave {
+  stroke: var(--color-secondary, #046488);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 6 10;
+  animation: waveMove 3.5s ease-in-out infinite;
+}
+@keyframes waveMove {
+  0%   { stroke-dashoffset: 0; }
+  50%  { stroke-dashoffset: -16; }
+  100% { stroke-dashoffset: 0; }
 }
 
-.logo-container:hover .logo-text {
-  color: #007bff;
+/* Caption */
+.logo-caption { line-height: 1.2; }
+.logo-title {
+  margin: 0.25rem 0 0;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--text, #111111);
+  letter-spacing: -0.01em;
+}
+.logo-tag {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted, #666666);
 }
 
-.tagline {
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  color: #ffffff;
-  /* Change text color to white */
-  transition: color 0.3s ease-in-out;
-}
+/* Hover emphasis */
+.logo-card:hover .card-bg { filter: brightness(1.02); transition: filter .25s ease; }
 
-.logo-container:hover .tagline {
-  color: #00bfff;
-}
-
-/* Animation for the robotic arm */
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0) translateX(0);
-  }
-
-  50% {
-    transform: translateY(-5px) translateX(5px);
-  }
-}
-
-#rovLogo line {
-  animation: float 2s ease-in-out infinite;
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .wave { animation: none; }
+  .arm { transform: none !important; }
 }

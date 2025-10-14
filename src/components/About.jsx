@@ -67,7 +67,7 @@ const About = () => {
     };
 
     fetchTeamMembers();
-  }, []);
+  });
 
   // Function to generate profile image URL
   const getProfileImage = (profile) => {
@@ -92,56 +92,25 @@ const About = () => {
   };
 
   return (
-    <div className="mt-20">
+    <div>
       <Banner banner={banner} heading={heading} subsheading={subheading} />
 
       <div className="container mx-auto py-12 px-4 md:px-0">
         <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">
           Who We Are
         </h2>
-        <p className="text-lg text-justify text-gray-600 mb-4 leading-relaxed">
-          In the heart of Alexandria, Egypt, a dream was born among a group of
-          keen engineering students in 2017. With a passion for innovation and a
-          desire to apply our learning in meaningful ways, we embarked on a
-          journey to create an underwater Remotely Operated Vehicle (ROV) that
-          would challenge the conventions of marine exploration and research.
-          Our fresh perspective led us to design an ROV that earned design
-          accolades at the MATE International ROV Competition. This early
-          success was a testament to our team's ingenuity and determination,
-          sparking a flame that would illuminate our path forward. Our thirst
-          for knowledge and excellence propelled us to further our education,
-          with team members completing master's degrees in renowned universities
-          across the globe. Armed with advanced knowledge in engineering fields
-          critical to our mission, we officially founded Invictus UMVs at the
-          dawn of 2023. Today, Invictus UMVs is at the forefront of unmanned
-          marine robotics in Egypt, specializing in the development of
-          industrial-grade Autonomous Surface Vehicles (ASVs) and ROVs. Our
-          commitment to innovation remains alive in our vehicles' intelligent
-          autonomous behavior, achieved through the integration of advanced
-          control algorithms and cutting-edge Artificial Intelligence/Machine
-          Learning technologies. Looking ahead, our vision is to expand our
-          autonomous fleet by introducing an Autonomous Underwater Vehicle (AUV)
-          and an Unmanned Aerial Vehicle (UAV). Our goal is to establish
-          seamless communication among our diverse vehicles, enabling the
-          creation of multi-vehicle swarms/fleets that can undertake complex,
-          coordinated missions across different domains. From our humble
-          beginnings as aspiring engineers to becoming pioneers in the field of
-          unmanned marine robotics in Egypt, our journey is one of passion,
-          perseverance, and unwavering dedication to pushing the boundaries of
-          what is possible. At Invictus UMVs, we are not just building vehicles;
-          we are shaping the future of marine exploration and beyond. In our
-          quest to pioneer advancements in unmanned marine robotics, we are
-          deeply committed to protecting the environment that harbors the
-          mysteries we seek to understand. At Invictus UMVs, sustainability is
-          at the core of our innovation. We power our fleet with green
-          electrical energy, ensuring that our vehicles not only push the
-          boundaries of exploration but do so with minimal impact on our
-          planet's delicate ecosystems. Our dedication to minimizing our carbon
-          footprint is unwavering, as we believe that the future of exploration
-          and technology should harmoniously coexist with the preservation of
-          the natural world.
+        <p className="text-[clamp(0.95rem,1.8vw,1.0625rem)] mb-4 leading-relaxed">
+          Founded by Alexandria engineering students inspired by a 2017
+          award-winning ROV, Invictus UMVs became an official company in 2023
+          after the team advanced their studies worldwide. Today they lead
+          unmanned marine robotics in Egypt, building industrial-grade ASVs and
+          ROVs with advanced control and AI/ML for intelligent autonomy. Their
+          roadmap adds AUVs and UAVs that communicate as coordinated swarms for
+          complex, cross-domain missions. Sustainability is central: the fleet
+          runs on green electric power to minimize environmental impact while
+          pushing the boundaries of ocean exploration.
         </p>
-        <p className="text-lg text-justify text-gray-600 mb-4 leading-relaxed">
+        <p className="text-[clamp(0.95rem,1.8vw,1.0625rem)] mb-4 leading-relaxed">
           As we expand our fleet to include Autonomous Underwater and Aerial
           Vehicles (AUVs and UAVs), our vision is to enable multi-vehicle swarms
           for complex missions. At Invictus UMVs, we are committed to
@@ -154,32 +123,50 @@ const About = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-primary mb-6">
           What We Offer
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-lg p-6 shadow-lg transform transition-transform hover:scale-105 hover:shadow-2xl text-center">
-            <h3 className="text-xl font-semibold text-primary mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <div
+            className="rounded-3xl p-6 text-center
+                  bg-[var(--surface)] backdrop-blur
+                  border border-white/10
+                  shadow-soft transition-all duration-300 ease-apple
+                  hover:shadow-soft-lg hover:-translate-y-0.5"
+          >
+            <h3 className="text-lg md:text-xl font-semibold text-primary mb-3">
               We Understand Requirements
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-primary">
               We focus on understanding your requirements to deliver the best
               output.
             </p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-lg transform transition-transform hover:scale-105 hover:shadow-2xl text-center">
-            <h3 className="text-xl font-semibold text-primary mb-4">
+          <div
+            className="rounded-3xl p-6 text-center
+                  bg-[var(--surface)] backdrop-blur
+                  border border-white/10
+                  shadow-soft transition-all duration-300 ease-apple
+                  hover:shadow-soft-lg hover:-translate-y-0.5"
+          >
+            <h3 className="text-lg md:text-xl font-semibold text-primary mb-3">
               We Work Precisely
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-primary">
               Precision is our strength. We deliver accurate and efficient
               solutions.
             </p>
           </div>
 
-          <div className="bg-white rounded-lg p-6 shadow-lg transform transition-transform hover:scale-105 hover:shadow-2xl text-center">
-            <h3 className="text-xl font-semibold text-primary mb-4">
+          <div
+            className="rounded-3xl p-6 text-center
+                  bg-[var(--surface)] backdrop-blur
+                  border border-white/10
+                  shadow-soft transition-all duration-300 ease-apple
+                  hover:shadow-soft-lg hover:-translate-y-0.5"
+          >
+            <h3 className="text-lg md:text-xl font-semibold text-primary mb-3">
               We Deliver the Best Output
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-primary">
               We ensure the best output for our clients with optimized
               solutions.
             </p>
@@ -228,7 +215,7 @@ const About = () => {
                   {member.name}
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {member.short_intro || "Team Member"}
+                  {member.short_intro || 'Team Member'}
                 </p>
                 {member.social_linkedin && (
                   <a

@@ -1,42 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-body {
-  font-family: 'Roboto', sans-serif;
-  background-color: black;
-  color: gray-100;
+:root {
+  /* Brand (unchanged) */
+  --color-primary: #007F73;
+  --color-secondary: #046488;
+  --color-ternary: #f6993f;
+  --color-pink: #ff69b4;
+  --color-success: #38c172;
+  --color-danger: #e3342f;
+  --color-primarylight: #88b3e4;
 }
-nav {
-  z-index: 1001 !important;
+
+/* LIGHT THEME */
+:root,
+html.light {
+  --bg: #f6f7f8;
+  --surface: rgba(255,255,255,0.9);
+  --text: rgba(0,0,0,0.90);
+  --muted: rgba(0,0,0,0.60);
+  --subtler: rgba(0,0,0,0.40);
+}
+
+/* DARK THEME */
+html.dark {
+  --bg: #0b0b0c;
+  --surface: rgba(255,255,255,0.06);
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.56);
+  --subtler: rgba(255,255,255,0.36);
+}
+
+html, body, #root { height: 100%; }
+body {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .gradientBg {
-  background: linear-gradient(90deg, #7BD5F5 0%, #787FF6 100%);
+  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+}
+.surface {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.10);
 }
 
 
-.success-message {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #4caf50;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 4px;
-  z-index: 1000;
-  animation: slideIn 0.5s, fadeOut 0.5s 2.5s forwards;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-  }
+* {
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease;
 }
